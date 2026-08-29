@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Webhooks;
 
-use App\Enums\DispatchStatus;
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\DispatchJob;
 use App\Models\InboundEvent;
 use App\Models\Order;
 use App\Models\WalletTopup;
+use App\Services\Dispatch\DispatchService;
 use App\Services\Orders\OrderService;
 use App\Services\Wallet\WalletService;
 use App\Services\Webhooks\WebhookDispatcher;
@@ -31,6 +31,7 @@ class N8nInboundController extends Controller
         private readonly OrderService $orders,
         private readonly WalletService $wallets,
         private readonly WebhookDispatcher $webhooks,
+        private readonly DispatchService $dispatch,
     ) {}
 
     public function __invoke(Request $request, string $topic): JsonResponse
@@ -72,21 +73,13 @@ class N8nInboundController extends Controller
         }
 
         $accepted = ($p['action'] ?? '') === 'accept';
-        $job->update([
-            'status' => $accepted ? DispatchStatus::Accepted : DispatchStatus::Declined,
-            'responded_at' => now(),
-            'tradesperson_profile_id' => $p['tradesperson_profile_id'] ?? $job->tradesperson_profile_id,
-        ]);
+        $pro = isset($p['tradesperson_profile_id'])
+            ? \App\Models\TradespersonProfile::find($p['tradesperson_profile_id'])
+            : $job->tradesperson;
 
-        if ($accepted && $job->tradesperson_profile_id) {
-            $order = $job->order;
-            if ($order->tradesperson_profile_id === null) {
-                $order->update(['tradesperson_profile_id' => $job->tradesperson_profile_id]);
-                $this->orders->transition($order, OrderStatus::Accepted, null, 'Accepted via WhatsApp automation');
-            }
-        }
+        $result = $this->dispatch->respondToDispatch($job, $accepted, $pro, 'n8n_automation');
 
-        return ['dispatch_job' => $job->id, 'status' => $job->status->value];
+        return ['dispatch_job' => $job->id] + $result;
     }
 
     private function handleTopupMatched(array $p): array

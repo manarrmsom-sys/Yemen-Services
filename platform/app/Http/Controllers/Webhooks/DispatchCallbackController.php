@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Webhooks;
 
-use App\Enums\DispatchStatus;
-use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\InboundEvent;
 use App\Models\Order;
-use App\Services\Orders\OrderService;
+use App\Models\TradespersonProfile;
+use App\Services\Dispatch\DispatchService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -18,7 +17,7 @@ use Illuminate\Http\Request;
  */
 class DispatchCallbackController extends Controller
 {
-    public function __construct(private readonly OrderService $orders) {}
+    public function __construct(private readonly DispatchService $dispatch) {}
 
     public function __invoke(Request $request, string $order, string $action): JsonResponse
     {
@@ -29,33 +28,24 @@ class DispatchCallbackController extends Controller
         abort_unless(hash_equals($expected, $token) || ! app()->environment('production'), 403);
 
         $orderModel = Order::where('reference', $order)->firstOrFail();
-        $profileId = $request->integer('tp') ?: null;
+        $profile = $request->integer('tp')
+            ? TradespersonProfile::find($request->integer('tp'))
+            : $orderModel->latestDispatch?->tradesperson;
 
         InboundEvent::create([
             'source' => 'whatsapp',
             'signature_status' => 'verified',
-            'payload' => ['order' => $order, 'action' => $action, 'tp' => $profileId],
+            'payload' => ['order' => $order, 'action' => $action, 'tp' => $profile?->id],
             'handler' => 'dispatch.callback',
             'status' => 'processed',
             'processed_at' => now(),
         ]);
 
         $job = $orderModel->latestDispatch;
-        $job?->update([
-            'status' => $action === 'accept' ? DispatchStatus::Accepted : DispatchStatus::Declined,
-            'responded_at' => now(),
-            'tradesperson_profile_id' => $profileId ?? $job->tradesperson_profile_id,
-        ]);
+        $result = $job
+            ? $this->dispatch->respondToDispatch($job, $action === 'accept', $profile, 'dispatch_link')
+            : ['status' => 'no_dispatch_job', 'order' => $orderModel->reference, 'assigned' => false];
 
-        if ($action === 'accept' && $orderModel->tradesperson_profile_id === null && $profileId) {
-            $orderModel->update(['tradesperson_profile_id' => $profileId]);
-            $this->orders->transition($orderModel, OrderStatus::Accepted, null, 'Accepted via dispatch link');
-        }
-
-        return response()->json(['data' => [
-            'order' => $orderModel->reference,
-            'status' => $orderModel->fresh()->status->value,
-            'action' => $action,
-        ]]);
+        return response()->json(['data' => $result + ['action' => $action]]);
     }
 }

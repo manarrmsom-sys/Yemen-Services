@@ -7,7 +7,9 @@ use App\Enums\OrderStatus;
 use App\Models\DispatchJob;
 use App\Models\Order;
 use App\Models\TradespersonProfile;
+use App\Services\Orders\OrderService;
 use App\Services\Webhooks\WebhookDispatcher;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -23,7 +25,10 @@ use Illuminate\Support\Facades\Log;
  */
 class DispatchService
 {
-    public function __construct(private readonly WebhookDispatcher $webhooks) {}
+    public function __construct(
+        private readonly WebhookDispatcher $webhooks,
+        private readonly OrderService $orders,
+    ) {}
 
     public function dispatchOrder(Order $order, string $mode = 'targeted', ?TradespersonProfile $target = null): DispatchJob
     {
@@ -163,6 +168,65 @@ class DispatchService
             'responded_at' => now(),
             'payload' => array_merge((array) $job->payload, ['response' => $meta]),
         ]);
+    }
+
+    /**
+     * Apply a tradesperson's accept/decline response to a dispatch job.
+     * Shared by the n8n callback, the signed deep-link callback, and the
+     * inbound free-text WhatsApp handler.
+     *
+     * @return array{status: string, order: string, assigned: bool}
+     */
+    public function respondToDispatch(DispatchJob $job, bool $accepted, ?TradespersonProfile $pro, string $via = 'callback'): array
+    {
+        return DB::transaction(function () use ($job, $accepted, $pro, $via) {
+            $job->refresh();
+            $order = $job->order()->lockForUpdate()->first();
+
+            // Idempotency / race guard.
+            if ($job->status === DispatchStatus::Accepted || $job->status === DispatchStatus::Declined) {
+                return ['status' => $job->status->value, 'order' => $order->reference, 'assigned' => false];
+            }
+            if ($job->expires_at && $job->expires_at->isPast()) {
+                $job->update(['status' => DispatchStatus::Expired]);
+
+                return ['status' => 'expired', 'order' => $order->reference, 'assigned' => false];
+            }
+
+            if (! $accepted) {
+                $this->markResponded($job, DispatchStatus::Declined, ['via' => $via, 'tradesperson_profile_id' => $pro?->id]);
+
+                return ['status' => 'declined', 'order' => $order->reference, 'assigned' => false];
+            }
+
+            // Accept: only assign if the order is still unclaimed and the pro is eligible.
+            $assigned = false;
+            if ($pro && $order->tradesperson_profile_id === null && ! $order->status->isTerminal()) {
+                $order->update(['tradesperson_profile_id' => $pro->id]);
+                $job->update(['tradesperson_profile_id' => $pro->id]);
+
+                if (in_array($order->status, [OrderStatus::PendingDispatch, OrderStatus::Dispatched], true)) {
+                    $this->orders->transition($order, OrderStatus::Accepted, $pro->user, "Accepted via {$via}");
+                }
+                $assigned = true;
+            }
+
+            $this->markResponded($job, DispatchStatus::Accepted, ['via' => $via, 'tradesperson_profile_id' => $pro?->id]);
+
+            // Losing bidders: mark any other open jobs for this order as expired.
+            if ($assigned) {
+                $order->dispatchJobs()
+                    ->whereKeyNot($job->id)
+                    ->whereIn('status', [DispatchStatus::Queued->value, DispatchStatus::Sent->value, DispatchStatus::Delivered->value])
+                    ->update(['status' => DispatchStatus::Expired->value]);
+            }
+
+            return [
+                'status' => $assigned ? 'accepted' : 'accepted_not_assigned',
+                'order' => $order->reference,
+                'assigned' => $assigned,
+            ];
+        });
     }
 
     private function pushToN8n(DispatchJob $job, array $payload): void

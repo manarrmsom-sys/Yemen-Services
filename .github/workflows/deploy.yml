@@ -1,0 +1,81 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to deploy
+        required: false
+        default: main
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to production VPS
+    runs-on: ubuntu-latest
+    # Only run when CI succeeded (or when triggered manually).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    environment:
+      name: production
+      url: https://${{ vars.PRODUCTION_DOMAIN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || 'main' }}
+
+      # Build assets in CI so the VPS never needs Node / a big toolchain.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: platform/package-lock.json
+      - working-directory: platform
+        run: |
+          npm ci --no-audit --no-fund
+          npm run generate:icons || echo "icon generation skipped (committed icons will be used)"
+          npm run build
+
+      - name: Package release
+        run: |
+          tar -czf release.tgz \
+            --exclude='./platform/node_modules' \
+            --exclude='./.git' \
+            ./platform ./deploy
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Upload & activate release
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}   # e.g. /var/www/yemen-services
+        run: |
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          RELEASE="$DEPLOY_PATH/releases/$(date +%Y%m%d%H%M%S)"
+          ssh "$SSH_USER@$SSH_HOST" "mkdir -p '$RELEASE'"
+          scp release.tgz "$SSH_USER@$SSH_HOST:$RELEASE/release.tgz"
+          ssh "$SSH_USER@$SSH_HOST" "cd '$RELEASE' && tar -xzf release.tgz && rm release.tgz"
+          ssh "$SSH_USER@$SSH_HOST" "DEPLOY_PATH='$DEPLOY_PATH' RELEASE='$RELEASE' bash '$RELEASE/deploy/deploy.sh'"
+
+      - name: Smoke test
+        run: |
+          sleep 5
+          curl -fsS "https://${{ vars.PRODUCTION_DOMAIN }}/up" > /dev/null
+          curl -fsS "https://${{ vars.PRODUCTION_DOMAIN }}/api/v1/catalog" | grep -q '"data"'
+          curl -fsS "https://${{ vars.PRODUCTION_DOMAIN }}/api/v1/governorates" | grep -q '"data"'
+          # Home page renders (Inertia root)
+          curl -fsS "https://${{ vars.PRODUCTION_DOMAIN }}/" | grep -q 'id="app"'

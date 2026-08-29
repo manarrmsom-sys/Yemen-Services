@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Webhooks;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ProcessInboundWhatsAppEvent;
 use App\Models\InboundEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -40,9 +41,15 @@ class WhatsAppWebhookController extends Controller
 
         Log::info('[webhook:whatsapp] received', ['event' => $event->id, 'sig' => $event->signature_status]);
 
-        // Parsing of statuses / auto-accept replies is delegated to a queued handler
-        // (out of scope for the webhook itself — keep the receiver fast + 200 quickly).
+        // In production we only act on signed payloads; unsigned ones are still stored
+        // for audit but not processed.
+        if ($event->signature_status === 'verified' || ! app()->environment('production')) {
+            ProcessInboundWhatsAppEvent::dispatch($event->id);
+        } else {
+            $event->update(['status' => 'ignored', 'note' => 'unverified signature']);
+        }
 
+        // Return 200 fast so Meta does not retry / disable the subscription.
         return response()->json(['received' => true]);
     }
 

@@ -26,25 +26,9 @@ export default defineConfig({
         VitePWA({
             registerType: 'autoUpdate',
             injectRegister: 'auto',
-            includeAssets: ['favicon.ico', 'icons/*.png'],
-            manifest: {
-                name: 'خدمات اليمن | Yemen Services',
-                short_name: 'خدمات اليمن',
-                description: 'منصة الخدمات المنزلية والتجارية عند الطلب',
-                theme_color: '#CE1126',
-                background_color: '#0F172A',
-                display: 'standalone',
-                orientation: 'portrait',
-                dir: 'rtl',
-                lang: 'ar',
-                start_url: '/',
-                scope: '/',
-                icons: [
-                    { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-                    { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-                    { src: '/icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-                ],
-            },
+            // The web manifest is served statically from public/manifest.webmanifest
+            // (single source of truth, works even before an asset build).
+            manifest: false,
             workbox: {
                 // App-shell assets are precached; navigations use a network-first
                 // strategy with the cached shell as the offline fallback.

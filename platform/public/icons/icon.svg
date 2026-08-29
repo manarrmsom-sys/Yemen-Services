@@ -1,9 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="96" fill="#CE1126"/>
-  <rect y="176" width="512" height="160" fill="#FFFFFF"/>
-  <rect y="336" width="512" height="176" fill="#0F172A"/>
-  <rect y="0" width="512" height="176" fill="#CE1126"/>
-  <g fill="#0F172A">
-    <path d="M256 196c-34 0-62 28-62 62 0 10 2 19 7 27l-73 73 28 28 73-73c8 5 17 7 27 7 34 0 62-28 62-62s-28-62-62-62zm0 40a22 22 0 1 1 0 44 22 22 0 0 1 0-44z"/>
+  <defs>
+    <clipPath id="r"><rect width="512" height="512" rx="112"/></clipPath>
+  </defs>
+  <g clip-path="url(#r)">
+    <rect width="512" height="171" fill="#CE1126"/>
+    <rect y="171" width="512" height="170" fill="#FFFFFF"/>
+    <rect y="341" width="512" height="171" fill="#0F172A"/>
+    <path fill="#0F172A" d="M300 176c-38 0-69 31-69 69 0 12 3 23 8 32l-83 83 34 34 83-83c9 5 20 8 32 8 38 0 69-31 69-69s-31-74-74-74zm-4 45a24 24 0 1 1 0 48 24 24 0 0 1 0-48z"/>
   </g>
 </svg>
