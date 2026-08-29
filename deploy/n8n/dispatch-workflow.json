@@ -1,0 +1,91 @@
+{
+  "name": "Yemen Services — WhatsApp Geo-Dispatch",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "yemen-dispatch",
+        "options": { "rawBody": true }
+      },
+      "id": "webhook-in",
+      "name": "Dispatch request (from platform)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verify HMAC-SHA256 of the raw body against the shared secret.\nconst crypto = require('crypto');\nconst secret = $env.YEMEN_DISPATCH_SECRET;\nconst raw = $input.first().json.body ?? JSON.stringify($input.first().json);\nconst sig = $input.first().headers['x-signature'];\nconst expected = crypto.createHmac('sha256', secret).update(typeof raw === 'string' ? raw : JSON.stringify(raw)).digest('hex');\nif (sig !== expected) { throw new Error('bad signature'); }\nreturn [{ json: typeof raw === 'string' ? JSON.parse(raw) : raw }];"
+      },
+      "id": "verify-sig",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build the WhatsApp message text from the platform payload.\nconst p = $json;\nconst lines = [\n  `🛠️ طلب جديد ${p.order.reference}`,\n  `المحافظة: ${p.geo.governorate_name} - ${p.geo.district ?? ''}`,\n  `الإجمالي التقديري: ${p.order.total_estimate} ${p.order.currency}`,\n  '',\n  `قبول: ${p.callbacks.accept}`,\n  `رفض: ${p.callbacks.decline}`\n];\nreturn [{ json: { ...p, waText: lines.join('\\n') } }];"
+      },
+      "id": "compose",
+      "name": "Compose WhatsApp text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.PLATFORM_URL }}/api/v1/tradespeople",
+        "options": {},
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "category_id", "value": "={{ $json.order.category_id }}" },
+            { "name": "governorate_id", "value": "={{ $json.geo.governorate_id }}" }
+          ]
+        }
+      },
+      "id": "match-pros",
+      "name": "Find matching tradespeople",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data.data",
+        "options": {}
+      },
+      "id": "split",
+      "name": "Split per tradesperson",
+      "type": "n8n-nodes-base.itemLists",
+      "typeVersion": 3,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v21.0/{{ $env.WHATSAPP_PHONE_NUMBER_ID }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $json.phone }}\",\n  \"type\": \"text\",\n  \"text\": { \"body\": {{ JSON.stringify($('Compose WhatsApp text').item.json.waText) }} }\n}"
+      },
+      "id": "send-wa",
+      "name": "Send WhatsApp to tradesperson",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "Dispatch request (from platform)": { "main": [[{ "node": "Verify signature", "type": "main", "index": 0 }]] },
+    "Verify signature": { "main": [[{ "node": "Compose WhatsApp text", "type": "main", "index": 0 }]] },
+    "Compose WhatsApp text": { "main": [[{ "node": "Find matching tradespeople", "type": "main", "index": 0 }]] },
+    "Find matching tradespeople": { "main": [[{ "node": "Split per tradesperson", "type": "main", "index": 0 }]] },
+    "Split per tradesperson": { "main": [[{ "node": "Send WhatsApp to tradesperson", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" },
+  "_comment": "Second flow (not shown): Webhook 'yemen-dispatch-response' -> Verify signature -> HTTP POST {{PLATFORM_URL}}/webhooks/n8n/dispatch-response with { dispatch_job_id | order_reference, action: 'accept'|'decline', tradesperson_profile_id }. A third flow parses bank/SMS transfer notifications and POSTs /webhooks/n8n/topup-matched with { reference_code, channel }."
+}

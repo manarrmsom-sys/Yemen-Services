@@ -1,0 +1,60 @@
+# Local / staging stack. Production runs on a VPS with system Nginx + PHP-FPM
+# (see deploy/nginx.conf, deploy/supervisor.conf) — this file is for parity while developing.
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ./platform
+      dockerfile: ../deploy/Dockerfile
+    volumes:
+      - ./platform:/var/www/html
+    depends_on: [mysql, redis]
+    environment:
+      DB_HOST: mysql
+      REDIS_HOST: redis
+    ports:
+      - '8000:8000'
+    command: php artisan serve --host=0.0.0.0 --port=8000
+
+  queue:
+    build:
+      context: ./platform
+      dockerfile: ../deploy/Dockerfile
+    volumes:
+      - ./platform:/var/www/html
+    depends_on: [mysql, redis]
+    environment:
+      DB_HOST: mysql
+      REDIS_HOST: redis
+    command: php artisan queue:work redis --tries=3 --sleep=1
+
+  vite:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./platform:/app
+    ports:
+      - '5173:5173'
+    command: sh -c "npm ci && npm run dev -- --host"
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: yemen_services
+      MYSQL_USER: yemen_app
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - '3306:3306'
+    volumes:
+      - db-data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+
+volumes:
+  db-data:

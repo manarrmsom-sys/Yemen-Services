@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --crimson: #ce1126;
+        --obsidian: #0f172a;
+    }
+
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        text-rendering: optimizeLegibility;
+    }
+
+    /* Latin runs inside Arabic UI pick up Inter automatically. */
+    [dir='ltr'] {
+        font-family: theme('fontFamily.latin');
+    }
+
+    /* Respect the iOS safe area for the bottom sheet + tab bar. */
+    .pb-safe {
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    }
+}
+
+@layer components {
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold
+               transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .btn-primary {
+        @apply btn bg-crimson text-white shadow-card hover:bg-crimson-600;
+    }
+    .btn-ghost {
+        @apply btn bg-obsidian-100 text-obsidian-900 hover:bg-obsidian-100/70;
+    }
+    .btn-whatsapp {
+        @apply btn bg-whatsapp text-white hover:brightness-95;
+    }
+    .card {
+        @apply rounded-2xl bg-white shadow-card ring-1 ring-obsidian-900/5;
+    }
+    .field {
+        @apply w-full rounded-xl border-obsidian-100 bg-offwhite px-4 py-3 text-sm
+               focus:border-crimson focus:ring-2 focus:ring-crimson/20;
+    }
+    .chip {
+        @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
+    }
+}
+
+/* Logical-property helpers so the same class works in RTL + LTR. */
+.start-0 { inset-inline-start: 0; }
+.end-0 { inset-inline-end: 0; }

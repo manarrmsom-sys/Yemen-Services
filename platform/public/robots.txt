@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /$
+Allow: /services
+Allow: /pros
+Disallow: /admin
+Disallow: /account
+Disallow: /trade
+Disallow: /api
+Disallow: /webhooks
