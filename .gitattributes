@@ -1,0 +1,8 @@
+* text=auto eol=lf
+
+*.php    diff=php
+*.blade.php linguist-language=Blade
+*.vue    linguist-language=Vue
+
+/platform/public/build export-ignore
+/docs                  linguist-documentation
