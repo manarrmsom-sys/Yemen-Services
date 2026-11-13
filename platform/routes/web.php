@@ -8,7 +8,8 @@ Route::get('/', [PageController::class, 'home'])->middleware('throttle:home')->n
 Route::get('/sitemap.xml', [PageController::class, 'sitemap'])->name('sitemap');
 Route::get('/services/{category:slug}', [PageController::class, 'category'])->name('services.category');
 Route::get('/book/{service:slug?}', [PageController::class, 'book'])->name('book');
-Route::get('/track/{reference?}', [PageController::class, 'track'])->name('track');
+// Throttled: references are short, so lookups must not be enumerable.
+Route::get('/track/{reference?}', [PageController::class, 'track'])->middleware('throttle:track')->name('track');
 Route::get('/pros', [PageController::class, 'pros'])->name('pros');
 Route::get('/join', [PageController::class, 'join'])->name('join');       // tradesperson onboarding
 Route::get('/offline', fn () => inertia('Offline'))->name('offline');

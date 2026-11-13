@@ -31,6 +31,8 @@ class OrderAdminController extends Controller
             ->when($request->string('sort')->value() === 'oldest', fn ($q) => $q->oldest(), fn ($q) => $q->latest())
             ->paginate($request->integer('per_page', 25));
 
+        $orders->getCollection()->each(fn ($o) => $o->customer?->makeVisible(\App\Models\User::CONTACT_FIELDS));
+
         return response()->json($orders);
     }
 
@@ -38,8 +40,10 @@ class OrderAdminController extends Controller
     {
         $order->load([
             'service', 'category', 'governorate', 'address', 'customer', 'tradesperson.user',
-            'items', 'events.actor', 'dispatchJobs', 'commissionEntry', 'review',
+            'items', 'events.actor:id,name,role', 'dispatchJobs', 'commissionEntry', 'review',
         ]);
+        $order->customer?->makeVisible(\App\Models\User::CONTACT_FIELDS);
+        $order->tradesperson?->user?->makeVisible(\App\Models\User::CONTACT_FIELDS);
 
         return response()->json(['data' => $order]);
     }

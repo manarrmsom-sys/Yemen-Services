@@ -150,9 +150,14 @@ class DispatchService
             : "https://wa.me/?text={$text}";
     }
 
+    public static function callbackToken(string $reference, string $action, ?int $tradespersonId): string
+    {
+        return hash_hmac('sha256', "{$reference}|{$action}|".($tradespersonId ?? ''), (string) config('app.key'));
+    }
+
     private function signedCallback(Order $order, string $action, ?TradespersonProfile $target): string
     {
-        $token = hash_hmac('sha256', "{$order->reference}|{$action}", (string) config('app.key'));
+        $token = self::callbackToken($order->reference, $action, $target?->id);
         $params = ['order' => $order->reference, 'action' => $action, 't' => $token];
         if ($target) {
             $params['tp'] = $target->id;

@@ -16,6 +16,7 @@ use App\Models\Service;
  *   1. base subtotal from the service's pricing model + quantity/hours
  *   2. apply active pricing_rules (multiplier / flat_add / flat_override) by priority
  *   3. governorate dispatch multiplier -> governorate_adjustment
+ *      (skipped for remote/digital categories: nobody travels)
  *   4. urgency surcharge (config percent) when urgency = urgent
  *   5. VAT (config percent) on (subtotal + adjustments + callout)
  *   6. round the customer-facing total to the configured step
@@ -91,7 +92,7 @@ class PriceEstimator
         }
 
         // --- 3. governorate adjustment ---
-        $multiplier = $governorate?->dispatch_multiplier ?? 1.0;
+        $multiplier = $service->category?->is_remote ? 1.0 : ($governorate?->dispatch_multiplier ?? 1.0);
         $governorateAdjustment = (int) round($subtotal * ($multiplier - 1.0));
         if ($governorateAdjustment !== 0) {
             $lines[] = $this->line('رسوم توصيل حسب المحافظة', 'Governorate dispatch fee', $governorateAdjustment);

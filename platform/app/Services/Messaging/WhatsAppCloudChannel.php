@@ -18,7 +18,9 @@ class WhatsAppCloudChannel implements MessageChannel
 
         if (empty($cfg['phone_number_id']) || empty($cfg['access_token'])) {
             // Fail soft in non-production so local dev keeps working.
-            if (! app()->environment('production')) {
+            // The body can contain a login code, so it is only ever logged on a
+            // developer machine — never on staging or production.
+            if (app()->environment(['local', 'testing'])) {
                 Log::info('[whatsapp:dev] message not sent (no credentials)', compact('toPhone', 'body', 'context'));
 
                 return 'dev-'.md5($toPhone.$body.microtime());

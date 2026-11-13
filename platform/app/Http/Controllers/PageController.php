@@ -85,11 +85,7 @@ class PageController extends Controller
     {
         return Inertia::render('Track', [
             'reference' => $reference,
-            'order' => $reference
-                ? Order::where('reference', $reference)
-                    ->with(['service', 'governorate', 'tradesperson:id,display_name,badges', 'events' => fn ($q) => $q->limit(20)])
-                    ->first()
-                : null,
+            'order' => $reference ? $this->publicTracking($reference) : null,
         ]);
     }
 
@@ -126,7 +122,11 @@ class PageController extends Controller
     {
         $order = Order::where('reference', $reference)->firstOrFail();
         $this->authorize('view', $order);
-        $order->load(['service', 'category', 'governorate', 'address', 'tradesperson.user', 'items', 'events.actor', 'review']);
+        $order->load(['service', 'category', 'governorate', 'address', 'items', 'review',
+            'tradesperson:id,user_id,display_name,image_url,badges,rating_avg,rating_count',
+            'tradesperson.user:id,phone',
+            'events' => fn ($q) => $q->select(['id', 'order_id', 'type', 'from_status', 'to_status', 'created_at'])]);
+        $order->tradesperson?->user?->makeVisible(['phone']);
 
         return Inertia::render('Account/Order', ['order' => $order]);
     }
@@ -143,6 +143,37 @@ class PageController extends Controller
     public function adminHome(): Response
     {
         return Inertia::render('Admin/Dashboard');
+    }
+
+    /**
+     * What anyone holding an order reference may see. Tracking is public by
+     * design (guests have no account), so this is a strict whitelist: status
+     * and timeline only — no name, phone, address, notes or internal messages.
+     */
+    private function publicTracking(string $reference): ?array
+    {
+        $order = Order::where('reference', strtoupper(trim($reference)))
+            ->with(['service:id,name_ar,name_en', 'governorate:id,name_ar,name_en', 'tradesperson:id,display_name,badges'])
+            ->first();
+
+        if (! $order) {
+            return null;
+        }
+
+        return [
+            'reference' => $order->reference,
+            'status' => $order->status->value,
+            'total_estimate' => $order->total_estimate,
+            'currency' => $order->currency,
+            'created_at' => $order->created_at?->toIso8601String(),
+            'service' => $order->service?->only(['name_ar', 'name_en']),
+            'governorate' => $order->governorate?->only(['name_ar', 'name_en']),
+            'tradesperson' => $order->tradesperson?->only(['display_name', 'badges']),
+            'events' => $order->events()->latest('created_at')->limit(20)
+                ->get(['id', 'type', 'to_status', 'created_at'])
+                ->map(fn ($e) => ['id' => $e->id, 'type' => $e->type, 'to_status' => $e->to_status, 'created_at' => $e->created_at])
+                ->all(),
+        ];
     }
 
     private function governorates(): \Illuminate\Support\Collection

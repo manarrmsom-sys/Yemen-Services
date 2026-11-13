@@ -124,7 +124,7 @@ const schema = computed(() => JSON.stringify({
 <template>
     <Head>
         <title>{{ ar ? 'خدمات اليمن | سوق الخدمات الموثوقة' : 'Yemen Services | Trusted services marketplace' }}</title>
-        <meta name="description" :content="ar ? 'اطلب خدمات منزلية وتجارية من فنيين موثّقين في مدن اليمن، بسعر واضح قبل التأكيد.' : 'Book verified home and commercial services across Yemen, with a clear price before you confirm.'" />
+        <meta name="description" :content="ar ? 'اطلب خدمات منزلية وتجارية ورقمية — سباكة وكهرباء وتصميم وبرمجة ومونتاج — من محترفين موثّقين في اليمن، بسعر واضح قبل التأكيد.' : 'Book verified home, commercial and digital services across Yemen — plumbing, electrical, design, development, video editing — with a clear price before you confirm.'" />
         <meta name="robots" content="index,follow,max-image-preview:large" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="خدمات اليمن | Yemen Services" />
@@ -231,7 +231,7 @@ const schema = computed(() => JSON.stringify({
                     <label class="relative block w-full sm:max-w-xs">
                         <span class="sr-only">{{ t('common.search') }}</span>
                         <span class="pointer-events-none absolute inset-y-0 start-3 grid place-items-center text-ink-400" aria-hidden="true">⌕</span>
-                        <input v-model="query" type="search" class="field !bg-white !ps-9" :placeholder="ar ? 'ابحث: سباكة، كهرباء، تكييف...' : 'Search: plumbing, electrical, AC...'" />
+                        <input v-model="query" type="search" class="field !bg-white !ps-9" :placeholder="ar ? 'ابحث: سباكة، تصميم، برمجة، مونتاج...' : 'Search: plumbing, design, development, editing...'" />
                     </label>
                 </div>
 
@@ -246,7 +246,7 @@ const schema = computed(() => JSON.stringify({
                         <span class="relative grid h-11 w-11 place-items-center rounded-xl bg-ink text-xl text-white transition duration-300 group-hover:bg-crimson">{{ category.icon || ['⌂', '◈', '◎', '✦'][index % 4] }}</span>
                         <span class="relative mt-6 block">
                             <span class="block font-extrabold text-ink">{{ category.name }}</span>
-                            <span class="mt-1 block text-xs text-ink-500">{{ category.services?.length || 0 }} {{ ar ? 'خدمة' : 'services' }}</span>
+                            <span class="mt-1 block text-xs text-ink-500">{{ category.services?.length || 0 }} {{ ar ? 'خدمة' : 'services' }}<template v-if="category.is_remote"> · {{ ar ? 'عن بُعد' : 'remote' }}</template></span>
                             <span v-if="fromPrice(category)" class="mt-2 block text-xs font-bold text-crimson">{{ ar ? 'يبدأ من' : 'From' }} {{ format(fromPrice(category)) }}</span>
                         </span>
                     </SpotlightCard>
@@ -287,7 +287,7 @@ const schema = computed(() => JSON.stringify({
                             <ul class="relative mt-4 flex flex-wrap gap-1.5">
                                 <li class="badge-kyc"><span aria-hidden="true">✓</span>{{ ar ? 'فنيون موثّقون KYC' : 'KYC-verified pros' }}</li>
                                 <li class="inline-flex items-center gap-1 rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-bold text-ink-600"><span aria-hidden="true">🛡</span>{{ t('footer.customer_rights') }}</li>
-                                <li class="inline-flex items-center gap-1 rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-bold text-ink-600">{{ t('booking.payment_cod') }}</li>
+                                <li class="inline-flex items-center gap-1 rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-bold text-ink-600">{{ service.category.is_remote ? (ar ? 'تنفيذ عن بُعد' : 'Delivered online') : t('booking.payment_cod') }}</li>
                             </ul>
 
                             <button type="button" class="relative mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-ink px-4 py-3 text-sm font-bold text-ink transition hover:border-crimson hover:bg-crimson hover:text-white" @click="book(service.slug)">

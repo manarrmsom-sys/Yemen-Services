@@ -77,8 +77,12 @@ class BookingController extends Controller
     public function claim(Request $request, Order $order): JsonResponse
     {
         abort_if($order->customer_id, 409, __('errors.order_already_claimed'));
+        $digits = fn (?string $p) => ltrim(preg_replace('/\D/', '', (string) $p), '0');
+        $user = $request->user();
         abort_unless(
-            $request->user()->phone === $order->contact_phone,
+            $user->phone_verified_at
+                && $digits($user->phone) !== ''
+                && $digits($user->phone) === $digits($order->contact_phone),
             403,
             __('errors.phone_mismatch'),
         );

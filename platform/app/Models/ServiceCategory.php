@@ -13,13 +13,14 @@ class ServiceCategory extends Model
 
     protected $fillable = [
         'slug', 'name_ar', 'name_en', 'description_ar', 'description_en',
-        'icon', 'accent_color', 'image_url', 'sort_order', 'requires_kyc', 'is_active',
+        'icon', 'accent_color', 'image_url', 'sort_order', 'requires_kyc', 'is_remote', 'is_active',
     ];
 
     protected function casts(): array
     {
         return [
             'requires_kyc' => 'boolean',
+            'is_remote' => 'boolean',
             'is_active' => 'boolean',
         ];
     }

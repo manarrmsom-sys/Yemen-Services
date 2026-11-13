@@ -28,6 +28,9 @@ class Order extends Model
         'created_ip',
     ];
 
+    /** The requester's IP is kept for abuse handling only. */
+    protected $hidden = ['created_ip'];
+
     protected function casts(): array
     {
         return [

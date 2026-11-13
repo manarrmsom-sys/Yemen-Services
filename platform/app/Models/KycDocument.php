@@ -15,6 +15,9 @@ class KycDocument extends Model
         'mime', 'size_bytes', 'review_status', 'review_note', 'reviewed_by', 'reviewed_at',
     ];
 
+    /** Storage location is internal; files are only streamed through the gated admin route. */
+    protected $hidden = ['disk', 'path'];
+
     protected function casts(): array
     {
         return [

@@ -21,8 +21,8 @@ class AuthController extends Controller
             'phone' => ['required_without:email', 'nullable', 'string', 'max:20', 'regex:/^\+?[0-9\s\-]{7,20}$/'],
         ]);
 
-        $channel = $data['channel'] ?? (isset($data['email']) ? 'email' : 'whatsapp');
-        $result = $this->otp->request($channel === 'email' ? $data['email'] : $data['phone'], $channel, $request->ip());
+        [$recipient, $channel] = $this->otp->resolveRecipient($data);
+        $result = $this->otp->request($recipient, $channel, $request->ip());
 
         return response()->json(['data' => $result]);
     }

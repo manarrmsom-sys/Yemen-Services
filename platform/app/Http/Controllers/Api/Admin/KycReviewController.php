@@ -24,12 +24,15 @@ class KycReviewController extends Controller
             ->orderBy('kyc_submitted_at')
             ->paginate($request->integer('per_page', 20));
 
+        $profiles->getCollection()->each(fn ($p) => $p->user?->makeVisible(\App\Models\User::CONTACT_FIELDS));
+
         return response()->json($profiles);
     }
 
     public function show(TradespersonProfile $profile): JsonResponse
     {
         $profile->load(['user', 'kycDocuments.reviewer:id,name', 'primaryCategory', 'baseGovernorate']);
+        $profile->user?->makeVisible(\App\Models\User::CONTACT_FIELDS);
 
         return response()->json(['data' => $profile]);
     }

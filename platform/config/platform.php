@@ -40,9 +40,11 @@ return [
         'api_base' => env('WHATSAPP_API_BASE', 'https://graph.facebook.com/v21.0'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
+        // Meta App Secret: verifies X-Hub-Signature-256 on inbound webhooks.
+        'app_secret' => env('WHATSAPP_APP_SECRET'),
         'otp_template' => env('WHATSAPP_TEMPLATE_OTP', 'otp_login'),
         // Business number used to build wa.me deep links for the "Gap Play" dispatch.
-        'business_number' => env('WHATSAPP_BUSINESS_NUMBER', ''),
+        'business_number' => env('WHATSAPP_BUSINESS_NUMBER', '967774274848'),
         'webhook_verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN'),
     ],
 

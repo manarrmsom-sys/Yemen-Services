@@ -23,9 +23,12 @@ class DispatchCallbackController extends Controller
     {
         abort_unless(in_array($action, ['accept', 'decline'], true), 404);
 
+        // The token covers the tradesperson id too, so a link sent to one pro
+        // cannot be replayed with ?tp= to assign the job to somebody else.
+        $tp = $request->query('tp');
         $token = (string) $request->query('t');
-        $expected = hash_hmac('sha256', "{$order}|{$action}", (string) config('app.key'));
-        abort_unless(hash_equals($expected, $token) || ! app()->environment('production'), 403);
+        $expected = DispatchService::callbackToken($order, $action, $tp !== null ? (int) $tp : null);
+        abort_unless(hash_equals($expected, $token), 403);
 
         $orderModel = Order::where('reference', $order)->firstOrFail();
         $profile = $request->integer('tp')

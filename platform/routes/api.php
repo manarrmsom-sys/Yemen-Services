@@ -39,7 +39,7 @@ Route::prefix('v1')->group(function () {
     // ---- Booking: create as guest OR authenticated ----
     Route::post('bookings', [BookingController::class, 'store'])->middleware('throttle:booking');
     Route::post('bookings/{order:reference}/claim', [BookingController::class, 'claim'])->middleware('auth:sanctum');
-    Route::get('bookings/{order:reference}/dispatch-link', [BookingController::class, 'dispatchLink']);
+    Route::get('bookings/{order:reference}/dispatch-link', [BookingController::class, 'dispatchLink'])->middleware('throttle:track');
 
     // ---- Authenticated customer / tradesperson area ----
     Route::middleware('auth:sanctum')->group(function () {

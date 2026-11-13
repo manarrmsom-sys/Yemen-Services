@@ -32,7 +32,10 @@ if (-not (Test-Path $db)) {
     if ($LASTEXITCODE -ne 0) { Remove-Item $db -Force; throw 'Migration/seed failed.' }
 } else {
     & $php artisan migrate --force
+    # Idempotent: picks up catalogue additions without wiping preview data.
+    & $php artisan db:seed --class=Database\Seeders\CatalogSeeder --force
 }
 
 & $php artisan cache:clear | Out-Null
-& $php artisan serve --host=127.0.0.1 --port=8000
+$port = if ($env:PORT) { $env:PORT } else { 8000 }
+& $php artisan serve --host=127.0.0.1 --port=$port

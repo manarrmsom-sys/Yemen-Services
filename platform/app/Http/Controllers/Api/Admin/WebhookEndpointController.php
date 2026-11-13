@@ -53,7 +53,7 @@ class WebhookEndpointController extends Controller
     {
         $data = $this->validate($request, [
             'name' => ['sometimes', 'string', 'max:120'],
-            'url' => ['sometimes', 'url', 'max:1024'],
+            'url' => ['sometimes', 'url', 'max:1024', 'starts_with:https://,http://'],
             'events' => ['sometimes', 'array', 'min:1'],
             'events.*' => ['string', Rule::in(array_merge(['*'], WebhookEvent::values()))],
             'is_active' => ['sometimes', 'boolean'],

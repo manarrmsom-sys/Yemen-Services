@@ -60,6 +60,7 @@ class TradespersonController extends Controller
             'base_governorate_id' => ['required', 'integer', 'exists:governorates,id'],
             'service_governorate_ids' => ['nullable', 'array'],
             'service_governorate_ids.*' => ['integer', 'exists:governorates,id'],
+            'skills.*' => ['string', 'max:60'],
             'headline_ar' => ['nullable', 'string', 'max:160'],
             'headline_en' => ['nullable', 'string', 'max:160'],
             'bio' => ['nullable', 'string', 'max:1500'],
@@ -93,8 +94,10 @@ class TradespersonController extends Controller
             'headline_en' => ['sometimes', 'nullable', 'string', 'max:160'],
             'bio' => ['sometimes', 'nullable', 'string', 'max:1500'],
             'years_experience' => ['sometimes', 'integer', 'between:0,60'],
-            'service_governorate_ids' => ['sometimes', 'array'],
-            'skills' => ['sometimes', 'array'],
+            'service_governorate_ids' => ['sometimes', 'array', 'max:30'],
+            'service_governorate_ids.*' => ['integer', 'exists:governorates,id'],
+            'skills' => ['sometimes', 'array', 'max:30'],
+            'skills.*' => ['string', 'max:60'],
             'is_accepting_jobs' => ['sometimes', 'boolean'],
         ]);
 
@@ -191,9 +194,25 @@ class TradespersonController extends Controller
             ->whereNull('tradesperson_profile_id')
             ->where('service_category_id', $profile->primary_category_id)
             ->whereIn('governorate_id', array_filter($govs))
-            ->with(['service', 'governorate'])
+            ->with(['service:id,name_ar,name_en', 'governorate:id,name_ar,name_en', 'address:id,district'])
             ->latest()
-            ->paginate(15);
+            ->paginate(15)
+            // Open jobs are visible to every verified pro in the category, so the
+            // customer's name, phone, notes and exact address stay out until one
+            // of them is actually assigned.
+            ->through(fn (Order $o) => [
+                'reference' => $o->reference,
+                'status' => $o->status->value,
+                'urgency' => $o->urgency->value,
+                'scheduled_for' => $o->scheduled_for,
+                'service' => $o->service?->only(['name_ar', 'name_en']),
+                'governorate' => $o->governorate?->only(['name_ar', 'name_en']),
+                'district' => $o->address?->district,
+                'total_estimate' => $o->total_estimate,
+                'commission_amount' => $o->commission_amount,
+                'currency' => $o->currency,
+                'created_at' => $o->created_at?->toIso8601String(),
+            ]);
 
         return response()->json($jobs);
     }
@@ -201,9 +220,15 @@ class TradespersonController extends Controller
     public function acceptOrder(Request $request, Order $order): JsonResponse
     {
         $profile = $this->profile($request);
-        abort_unless($order->tradesperson_profile_id === null, 409, __('errors.order_taken'));
+        // Only an open job in this pro's own category can be taken.
+        abort_unless(in_array($order->status, [OrderStatus::PendingDispatch, OrderStatus::Dispatched], true), 409, __('errors.order_taken'));
+        abort_unless($order->service_category_id === $profile->primary_category_id, 403);
 
-        $order->update(['tradesperson_profile_id' => $profile->id]);
+        // Atomic claim: two pros accepting at once cannot both win.
+        $claimed = Order::whereKey($order->id)->whereNull('tradesperson_profile_id')
+            ->update(['tradesperson_profile_id' => $profile->id]);
+        abort_unless($claimed === 1, 409, __('errors.order_taken'));
+        $order->refresh();
         $this->orders->transition($order, OrderStatus::Accepted, $request->user(), 'Accepted by tradesperson');
 
         return response()->json(['data' => $this->orders->summary($order->fresh())]);

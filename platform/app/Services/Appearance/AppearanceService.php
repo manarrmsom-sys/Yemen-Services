@@ -150,7 +150,7 @@ class AppearanceService
 
             $query = Service::query()->where('is_active', true)
                 ->whereHas('category', fn ($q) => $q->where('is_active', true))
-                ->with('category:id,slug,name_ar,name_en,icon,image_url,requires_kyc');
+                ->with('category:id,slug,name_ar,name_en,icon,image_url,requires_kyc,is_remote');
 
             if ($ids !== []) {
                 $services = $query->whereIn('id', $ids)->get()
@@ -182,6 +182,7 @@ class AppearanceService
                     'icon' => $s->category->icon,
                     'image_url' => $s->category->image_url,
                     'requires_kyc' => (bool) $s->category->requires_kyc,
+                    'is_remote' => (bool) $s->category->is_remote,
                 ],
             ])->all();
         });

@@ -46,6 +46,8 @@ const services = computed(() => selectedCategory.value?.services ?? []);
 const selectedService = computed(() => services.value.find((s) => s.id === form.service_id));
 const needsQuantity = computed(() => selectedService.value?.pricing_model === 'per_unit');
 const needsHours = computed(() => selectedService.value?.pricing_model === 'hourly');
+// Digital categories are delivered online: no district or directions needed.
+const isRemote = computed(() => selectedCategory.value?.is_remote === true);
 
 // Preselect a service passed from the route.
 watch(
@@ -228,14 +230,17 @@ function close() {
                                     <option v-for="g in governorates" :key="g.id" :value="g.id">{{ g.name }}</option>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-sm font-semibold">{{ t('booking.district') }}</label>
-                                <input v-model="form.district" class="field" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold">{{ t('booking.directions') }}</label>
-                                <textarea v-model="form.directions" rows="2" class="field" />
-                            </div>
+                            <p v-if="isRemote" class="rounded-xl bg-obsidian-100 px-3 py-2 text-xs font-semibold text-obsidian-900/70">{{ t('booking.remote_note') }}</p>
+                            <template v-else>
+                                <div>
+                                    <label class="block text-sm font-semibold">{{ t('booking.district') }}</label>
+                                    <input v-model="form.district" class="field" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold">{{ t('booking.directions') }}</label>
+                                    <textarea v-model="form.directions" rows="2" class="field" />
+                                </div>
+                            </template>
                             <div>
                                 <label class="block text-sm font-semibold">{{ t('booking.urgency') }}</label>
                                 <div class="mt-1 grid grid-cols-3 gap-2">

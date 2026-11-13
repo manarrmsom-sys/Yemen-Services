@@ -43,7 +43,7 @@ class WhatsAppWebhookController extends Controller
 
         // In production we only act on signed payloads; unsigned ones are still stored
         // for audit but not processed.
-        if ($event->signature_status === 'verified' || ! app()->environment('production')) {
+        if ($event->signature_status === 'verified' || app()->environment(['local', 'testing'])) {
             ProcessInboundWhatsAppEvent::dispatch($event->id);
         } else {
             $event->update(['status' => 'ignored', 'note' => 'unverified signature']);
@@ -55,7 +55,8 @@ class WhatsAppWebhookController extends Controller
 
     private function verifySignature(Request $request): bool
     {
-        $secret = config('platform.whatsapp.access_token');
+        // Meta signs webhooks with the App Secret, not the access token.
+        $secret = config('platform.whatsapp.app_secret');
         $header = $request->header('X-Hub-Signature-256');
 
         if (! $secret || ! $header) {

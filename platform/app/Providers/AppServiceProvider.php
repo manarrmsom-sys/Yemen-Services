@@ -41,10 +41,19 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api', fn ($request) => Limit::perMinute($limits['api'])
             ->by($request->user()?->id ?: $request->ip()));
 
-        RateLimiter::for('otp-request', fn ($request) => [
-            Limit::perMinute($limits['otp_request'])->by('ip:'.$request->ip()),
-            Limit::perMinute(max(2, (int) ($limits['otp_request'] / 2)))->by('identity:'.sha1((string) ($request->input('email') ?: $request->input('phone')))),
-        ]);
+        RateLimiter::for('otp-request', function ($request) use ($limits) {
+            // Requests are keyed by the email/phone; verifications by the session
+            // token. (Verify calls carry no email/phone, so keying them on that
+            // put every user in the world into one shared bucket.)
+            $identity = $request->input('email') ?: $request->input('phone') ?: $request->input('session_token');
+
+            return array_filter([
+                Limit::perMinute($limits['otp_request'])->by('ip:'.$request->ip()),
+                $identity ? Limit::perMinute(max(2, (int) ($limits['otp_request'] / 2)))->by('identity:'.sha1(strtolower((string) $identity))) : null,
+            ]);
+        });
+
+        RateLimiter::for('track', fn ($request) => Limit::perMinute(30)->by($request->ip()));
 
         RateLimiter::for('home', fn ($request) => Limit::perMinute($limits['home'])->by($request->ip()));
 

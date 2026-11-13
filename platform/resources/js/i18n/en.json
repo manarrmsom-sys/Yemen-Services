@@ -35,6 +35,7 @@
         "secure_platform": "Protected platform"
     },
     "booking": {
+        "remote_note": "Digital service delivered online. No address needed, no call-out or governorate fee.",
         "title": "Book a service",
         "step_service": "Service",
         "step_where": "Where & when",
@@ -78,6 +79,14 @@
         "note": "This is an estimate and may change after assessment."
     },
     "auth": {
+        "login_heading": "Sign in",
+        "login_sub": "No password. We send you a verification code.",
+        "channel_email": "Email",
+        "phone_label": "WhatsApp number",
+        "phone_label_sms": "Mobile number",
+        "code_sent_email": "We sent the code to your email.",
+        "code_sent_whatsapp": "We sent the code on WhatsApp.",
+        "code_sent_sms": "We sent the code by SMS.",
         "login_title": "Sign in with your email",
         "email_label": "Email address",
         "send_code": "Send verification code",

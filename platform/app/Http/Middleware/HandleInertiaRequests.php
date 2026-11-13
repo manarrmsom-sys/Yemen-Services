@@ -45,21 +45,27 @@ class HandleInertiaRequests extends Middleware
                 'name' => config('app.name'),
                 'currency' => config('platform.currency'),
                 'commission_percent' => config('platform.pricing.commission_percent'),
+                // Digits only, e.g. 967774274848 (used for wa.me and tel: links).
+                'support_whatsapp' => preg_replace('/\D/', '', (string) config('platform.whatsapp.business_number')),
+                'otp' => [
+                    'default' => config('platform.otp.default_channel'),
+                    'channels' => array_keys(array_filter(config('platform.otp.channels', []))),
+                ],
             ],
             // Admin-managed announcement bar shown by the public layout.
             'announcement' => fn () => app(AppearanceService::class)->announcement($locale),
             // Lightweight, cached catalog for the booking drawer — avoids an extra request.
-            'catalog' => fn () => cache()->remember("catalog:{$locale}:v3", 300, fn () => ServiceCategory::query()
+            'catalog' => fn () => cache()->remember("catalog:{$locale}:v4", 300, fn () => ServiceCategory::query()
                 ->where('is_active', true)
                 ->orderBy('sort_order')
-                ->limit(10)
+                ->limit(20)
                 ->with(['services' => fn ($q) => $q->select([
                     'id', 'service_category_id', 'slug', 'name_ar', 'name_en',
                     'pricing_model', 'base_price', 'hourly_rate', 'unit_price',
                     'unit_label_ar', 'unit_label_en', 'callout_fee',
                 ])->where('is_active', true)->orderBy('sort_order')->limit(10)])
                 ->get([
-                    'id', 'slug', 'name_ar', 'name_en', 'icon', 'accent_color',
+                    'id', 'slug', 'name_ar', 'name_en', 'icon', 'accent_color', 'image_url', 'is_remote',
                 ])
                 ->map(fn ($c) => [
                     'id' => $c->id,
@@ -68,6 +74,7 @@ class HandleInertiaRequests extends Middleware
                     'icon' => $c->icon,
                     'accent' => $c->accent_color,
                     'image_url' => $c->image_url,
+                    'is_remote' => (bool) $c->is_remote,
                     'services' => $c->services->map(fn ($s) => [
                         'id' => $s->id,
                         'slug' => $s->slug,

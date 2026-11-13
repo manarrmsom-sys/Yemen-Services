@@ -18,7 +18,8 @@ class OrderController extends Controller
         $user = $request->user();
 
         $query = Order::query()
-            ->with(['service', 'category', 'governorate', 'tradesperson', 'latestDispatch'])
+            ->with(['service', 'category', 'governorate', 'latestDispatch',
+                'tradesperson:id,display_name,image_url,badges,rating_avg,rating_count'])
             ->latest();
 
         if ($user->role->value === 'tradesperson' && $user->tradespersonProfile) {
@@ -34,7 +35,13 @@ class OrderController extends Controller
     {
         $this->authorize('view', $order);
 
-        $order->load(['service', 'category', 'governorate', 'address', 'tradesperson.user', 'items', 'events.actor', 'latestDispatch', 'review']);
+        // No actor / internal notes on events, and only the assigned pro's phone
+        // (the customer needs it to coordinate) — never their email.
+        $order->load(['service', 'category', 'governorate', 'address', 'items', 'review', 'latestDispatch',
+            'tradesperson:id,user_id,display_name,image_url,badges,rating_avg,rating_count',
+            'tradesperson.user:id,phone',
+            'events' => fn ($q) => $q->select(['id', 'order_id', 'type', 'from_status', 'to_status', 'created_at'])]);
+        $order->tradesperson?->user?->makeVisible(['phone']);
 
         return response()->json(['data' => $order]);
     }

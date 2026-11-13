@@ -21,7 +21,18 @@ class User extends Authenticatable
         'phone_verified_at', 'email_verified_at',
     ];
 
-    protected $hidden = ['password', 'remember_token'];
+    /**
+     * Contact details are private by default: any endpoint that eager-loads a
+     * user (order actor, tradesperson owner, reviewer...) would otherwise leak
+     * that person's email and phone. Endpoints entitled to them opt in with
+     * makeVisible().
+     */
+    protected $hidden = [
+        'password', 'remember_token', 'email', 'phone', 'registration_ip',
+        'email_verified_at', 'phone_verified_at',
+    ];
+
+    public const CONTACT_FIELDS = ['email', 'phone'];
 
     protected function casts(): array
     {

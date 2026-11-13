@@ -21,10 +21,44 @@ class OtpService
      *
      * @return array{session_token: string, expires_at: string, channel: string, resend_in: int}
      */
+    /**
+     * Work out which identity and channel a login request is for.
+     * An email goes over email; a phone goes over WhatsApp, or SMS when WhatsApp
+     * is switched off. Fails with a field error (422) rather than a 500.
+     *
+     * @param  array{email?: ?string, phone?: ?string, channel?: ?string}  $data
+     * @return array{0: string, 1: string} [recipient, channel]
+     */
+    public function resolveRecipient(array $data): array
+    {
+        $enabled = fn (string $c) => (bool) config("platform.otp.channels.{$c}", false);
+
+        $channel = $data['channel'] ?? null;
+        if (! $channel) {
+            $channel = filled($data['email'] ?? null) ? 'email' : ($enabled('whatsapp') ? 'whatsapp' : 'sms');
+        }
+
+        $field = $channel === 'email' ? 'email' : 'phone';
+        if (blank($data[$field] ?? null)) {
+            throw ValidationException::withMessages([$field => [__('auth.otp_identity_required')]]);
+        }
+        if (! $enabled($channel)) {
+            throw ValidationException::withMessages([$field => [__('auth.otp_channel_disabled')]]);
+        }
+
+        return [$data[$field], $channel];
+    }
+
     public function request(string $recipient, ?string $channel = null, ?string $ip = null, string $purpose = 'login'): array
     {
         $cfg = config('platform.otp');
         $channel = OtpChannel::tryFrom($channel ?? $cfg['default_channel']) ?? OtpChannel::from($cfg['default_channel']);
+        if (! config("platform.otp.channels.{$channel->value}", false)) {
+            // Refuse before a code is stored, so a disabled channel leaves no orphan OTP.
+            throw ValidationException::withMessages([
+                $channel === OtpChannel::Email ? 'email' : 'phone' => [__('auth.otp_channel_disabled')],
+            ]);
+        }
         $recipient = $channel === OtpChannel::Email ? strtolower(trim($recipient)) : $this->normalizePhone($recipient);
         $identityColumn = $channel === OtpChannel::Email ? 'email' : 'phone';
 

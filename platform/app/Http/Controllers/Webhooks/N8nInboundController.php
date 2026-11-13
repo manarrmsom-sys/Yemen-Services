@@ -128,7 +128,9 @@ class N8nInboundController extends Controller
     {
         $secret = (string) config('platform.n8n.secret');
         if ($secret === '') {
-            return ! app()->environment('production');
+            // No secret configured: accept only on a developer machine / in tests.
+            // (Staging used to accept unsigned calls, including top-up confirmations.)
+            return app()->environment(['local', 'testing']);
         }
 
         $expected = hash_hmac('sha256', $request->getContent(), $secret);

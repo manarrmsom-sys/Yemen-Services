@@ -12,6 +12,10 @@ const page = usePage();
 const user = computed(() => page.props.auth?.user);
 const canAccessAdmin = computed(() => ['admin', 'dispatcher'].includes(user.value?.role));
 
+// Support number comes from WHATSAPP_BUSINESS_NUMBER (digits only).
+const support = computed(() => page.props.app?.support_whatsapp || '');
+const supportPretty = computed(() => support.value.replace(/^(\d{3})(\d{3})(\d{3})(\d{3})$/, '+$1 $2 $3 $4') || `+${support.value}`);
+
 const { y } = useWindowScroll();
 const scrolled = computed(() => y.value > 8);
 
@@ -83,7 +87,7 @@ const tabs = computed(() => [
                 </div>
                 <div>
                     <p class="font-bold text-white">{{ t('footer.contact_title') }}</p>
-                    <div class="mt-3 space-y-2"><a href="tel:+967700000000" class="block transition hover:text-white">{{ t('footer.customer_service') }}: <span dir="ltr">+967 700 000 000</span></a><a href="https://wa.me/967700000000" rel="noopener noreferrer" class="block transition hover:text-white">{{ t('footer.whatsapp_support') }}</a></div>
+                    <div v-if="support" class="mt-3 space-y-2"><a :href="`tel:+${support}`" class="block transition hover:text-white">{{ t('footer.customer_service') }}: <span dir="ltr">{{ supportPretty }}</span></a><a :href="`https://wa.me/${support}`" target="_blank" rel="noopener noreferrer" class="block transition hover:text-white">{{ t('footer.whatsapp_support') }}</a></div>
                 </div>
                 <div>
                     <p class="font-bold text-white">{{ t('footer.trust_title') }}</p>
