@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'dispatch_unavailable' => 'Your request was saved, but provider dispatch is temporarily unavailable. Our operations team can follow it up.',
     'server' => 'Something went wrong. Please try again.',
     'forbidden' => 'You are not allowed to perform this action.',
     'account_suspended' => 'This account is suspended.',

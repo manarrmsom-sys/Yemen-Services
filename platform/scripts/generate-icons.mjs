@@ -30,7 +30,9 @@ async function render(size, { padding = 0, background = null } = {}) {
         const pad = Math.round((size - inner) / 2);
         img = img.extend({ top: pad, bottom: pad, left: pad, right: pad, background: background || '#00000000' });
     }
-    return img.png().toBuffer();
+    const buffer = await img.png().toBuffer();
+
+    return sharp(buffer).resize(size, size, { fit: 'fill' }).png().toBuffer();
 }
 
 async function write(name, buf) {

@@ -30,13 +30,15 @@ class SecurityHeaders
         }
 
         if (! $request->is('api/*') && ! $request->is('webhooks/*')) {
+            $isLocal = app()->environment('local');
+
             $headers['Content-Security-Policy'] = implode('; ', [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline'".(app()->environment('local') ? " 'unsafe-eval'" : ''),
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+                "script-src 'self' 'unsafe-inline'".($isLocal ? " 'unsafe-eval' http://127.0.0.1:5173 http://localhost:5173" : ''),
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com".($isLocal ? ' http://127.0.0.1:5173 http://localhost:5173' : ''),
                 "font-src 'self' https://fonts.gstatic.com data:",
                 "img-src 'self' data: blob: https:",
-                "connect-src 'self'".(app()->environment('local') ? ' ws: http://localhost:* http://127.0.0.1:*' : ''),
+                "connect-src 'self'".($isLocal ? ' ws://127.0.0.1:5173 http://127.0.0.1:5173 ws://localhost:5173 http://localhost:5173' : ''),
                 "frame-ancestors 'none'",
                 "base-uri 'self'",
                 "form-action 'self'",

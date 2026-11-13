@@ -43,8 +43,10 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('otp-request', fn ($request) => [
             Limit::perMinute($limits['otp_request'])->by('ip:'.$request->ip()),
-            Limit::perMinute(max(2, (int) ($limits['otp_request'] / 2)))->by('phone:'.sha1((string) $request->input('phone'))),
+            Limit::perMinute(max(2, (int) ($limits['otp_request'] / 2)))->by('identity:'.sha1((string) ($request->input('email') ?: $request->input('phone')))),
         ]);
+
+        RateLimiter::for('home', fn ($request) => Limit::perMinute($limits['home'])->by($request->ip()));
 
         RateLimiter::for('booking', fn ($request) => Limit::perMinute($limits['booking'])
             ->by($request->user()?->id ?: $request->ip()));

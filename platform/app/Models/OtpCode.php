@@ -20,7 +20,7 @@ class OtpCode extends Model
     }
 
     protected $fillable = [
-        'phone', 'code_hash', 'channel', 'purpose', 'attempts',
+        'phone', 'email', 'code_hash', 'channel', 'purpose', 'attempts',
         'request_ip', 'session_token', 'expires_at', 'consumed_at',
     ];
 

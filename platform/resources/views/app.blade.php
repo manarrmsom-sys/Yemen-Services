@@ -2,8 +2,9 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ request()->attributes->get('dir', 'rtl') }}">
 <head>
     <meta charset="utf-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#CE1126">
+    <meta name="theme-color" content="#0F172A">
     <meta name="description" content="{{ __('منصة الخدمات المنزلية والتجارية عند الطلب في اليمن') }}">
 
     <title inertia>{{ config('app.name', 'Yemen Services') }}</title>
@@ -18,10 +19,10 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-    <link rel="mask-icon" href="/icons/icon.svg" color="#CE1126">
+    <link rel="mask-icon" href="/icons/icon.svg" color="#0F172A">
 
     @routes
-    @vite('resources/js/app.js')
+    @vite(['resources/js/app.js', 'resources/css/app.css'])
     @inertiaHead
 </head>
 <body class="bg-offwhite text-obsidian-900 antialiased font-sans">

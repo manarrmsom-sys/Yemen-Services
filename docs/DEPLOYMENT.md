@@ -51,7 +51,7 @@ php artisan db:seed --class=CatalogSeeder --force
 php artisan db:seed --class=AdminUserSeeder --force   # prints a generated admin password once
 php artisan storage:link
 
-php artisan config:cache && php artisan route:cache && php artisan view:cache
+php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan event:cache
 
 sudo chown -R www-data:www-data storage bootstrap/cache
 ```
@@ -72,7 +72,10 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 
 Cloudflare dashboard: SSL/TLS mode **Full (strict)**, "Always Use HTTPS" on,
-Bot Fight Mode on, a rate-limiting rule on `/api/v1/auth/*`.
+Bot Fight Mode on, Brotli compression on, and a rate-limiting rule on `/api/v1/auth/*`.
+The bundled Nginx config enables gzip; Brotli should be provided by Cloudflare or by an
+Nginx build with the Brotli module installed. Do not add Brotli directives to a stock
+Nginx package without that module.
 
 ## 3. Workers
 
@@ -116,7 +119,7 @@ php artisan down --render="errors::503"
 composer install --no-dev --optimize-autoloader
 npm ci && npm run build
 php artisan migrate --force
-php artisan config:cache && php artisan route:cache && php artisan view:cache
+php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan event:cache
 sudo supervisorctl restart yemen-queue:*
 php artisan up
 ```

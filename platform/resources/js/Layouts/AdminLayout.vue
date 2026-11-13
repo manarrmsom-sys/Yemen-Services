@@ -12,6 +12,9 @@ const nav = [
     ['admin.dispatch', 'admin.dispatch', '🛰️'],
     ['admin.kyc', 'admin.kyc', '🪪'],
     ['admin.wallets', 'admin.wallets', '💳'],
+    ['admin.categories', 'admin.categories', '🗂️'],
+    ['admin.services', 'admin.services', '🛠️'],
+    ['admin.pros', 'admin.pros', '👥'],
     ['admin.integrations', 'admin.integrations', '🔌'],
 ];
 </script>

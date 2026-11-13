@@ -11,6 +11,24 @@ const client = axios.create({
     withCredentials: true,
 });
 
+const csrfCookie = axios.get('/sanctum/csrf-cookie', { withCredentials: true });
+
+function recoverFromExpiredSession() {
+    window.alert('انتهت جلسة الصفحة. سيتم تحديثها الآن.');
+    window.location.reload();
+}
+
+client.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        if (error.response?.status === 419) {
+            recoverFromExpiredSession();
+        }
+
+        return Promise.reject(error);
+    },
+);
+
 export function useApi() {
     const page = usePage();
 
@@ -18,7 +36,7 @@ export function useApi() {
 
     return {
         get: (url, config) => client.get(url, config).then((r) => r.data),
-        post: (url, data, config) => client.post(url, data, config).then((r) => r.data),
+        post: (url, data, config) => csrfCookie.then(() => client.post(url, data, config)).then((r) => r.data),
         patch: (url, data, config) => client.patch(url, data, config).then((r) => r.data),
         delete: (url, config) => client.delete(url, config).then((r) => r.data),
         raw: client,

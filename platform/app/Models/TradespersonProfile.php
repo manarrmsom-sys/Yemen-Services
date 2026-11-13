@@ -14,7 +14,7 @@ class TradespersonProfile extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'primary_category_id', 'base_governorate_id', 'display_name',
+        'user_id', 'primary_category_id', 'base_governorate_id', 'display_name', 'image_url',
         'headline_ar', 'headline_en', 'bio', 'years_experience', 'service_governorate_ids',
         'skills', 'kyc_status', 'kyc_submitted_at', 'kyc_verified_at', 'kyc_reviewed_by',
         'kyc_rejection_reason', 'background_checked', 'badges', 'rating_avg', 'rating_count',

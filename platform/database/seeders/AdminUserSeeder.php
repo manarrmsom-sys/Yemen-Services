@@ -12,20 +12,23 @@ class AdminUserSeeder extends Seeder
     public function run(): void
     {
         $phone = env('SEED_ADMIN_PHONE', '+967700000001');
+        $email = env('SEED_ADMIN_EMAIL', 'admin@yemenservices.local');
         $password = env('SEED_ADMIN_PASSWORD') ?: Str::random(16);
 
-        $user = User::updateOrCreate(['phone' => $phone], [
+        $user = User::updateOrCreate(['email' => $email], [
             'name' => 'Platform Admin',
-            'email' => env('SEED_ADMIN_EMAIL', 'admin@yemenservices.local'),
+            'phone' => $phone,
             'role' => 'admin',
             'status' => 'active',
             'preferred_locale' => 'ar',
             'password' => Hash::make($password),
             'phone_verified_at' => now(),
+            'email_verified_at' => now(),
         ]);
 
         if (! env('SEED_ADMIN_PASSWORD')) {
-            $this->command->warn("Admin created: {$phone}");
+            $this->command->warn("Admin email: {$email}");
+            $this->command->warn("Admin phone: {$phone}");
             $this->command->warn("Generated admin password (store securely, then rotate): {$password}");
         }
 

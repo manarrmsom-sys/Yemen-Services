@@ -12,10 +12,10 @@ WORKDIR /var/www/html
 
 # Composer deps first for layer caching.
 COPY composer.json composer.lock* ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist || true
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
 
 COPY . .
-RUN composer dump-autoload --optimize || true \
+RUN composer dump-autoload --optimize \
     && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 8000

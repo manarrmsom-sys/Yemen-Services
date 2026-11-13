@@ -5,6 +5,7 @@ return [
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
 
     'otp_message' => 'Your :app verification code is :code. It expires in :minutes minutes.',
+    'otp_subject' => 'Your verification code',
     'otp_sent' => 'A verification code has been sent.',
     'otp_invalid' => 'The verification code is incorrect.',
     'otp_expired' => 'This code has expired. Request a new one.',

@@ -9,7 +9,7 @@ interface MessageChannel
      *
      * @param  array<string, mixed>  $context  template variables / metadata
      */
-    public function send(string $toPhone, string $body, array $context = []): string;
+    public function send(string $recipient, string $body, array $context = []): string;
 
     public function name(): string;
 }

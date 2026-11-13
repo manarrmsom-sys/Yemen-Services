@@ -23,7 +23,17 @@ return [
         'ttl_seconds' => (int) env('OTP_TTL_SECONDS', 300),
         'max_attempts' => (int) env('OTP_MAX_ATTEMPTS', 5),
         'resend_cooldown_seconds' => (int) env('OTP_RESEND_COOLDOWN_SECONDS', 60),
-        'default_channel' => env('OTP_CHANNEL_DEFAULT', 'whatsapp'),
+        'default_channel' => env('OTP_CHANNEL_DEFAULT', 'email'),
+        'channels' => [
+            'email' => (bool) env('OTP_CHANNEL_EMAIL_ENABLED', true),
+            'whatsapp' => (bool) env('OTP_CHANNEL_WHATSAPP_ENABLED', false),
+            'sms' => (bool) env('OTP_CHANNEL_SMS_ENABLED', false),
+        ],
+    ],
+
+    'mail' => [
+        'from_address' => env('MAIL_FROM_ADDRESS'),
+        'from_name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Yemen Services')),
     ],
 
     'whatsapp' => [
@@ -59,6 +69,7 @@ return [
         'otp_request' => (int) env('RATELIMIT_OTP_REQUEST', 5),
         'booking' => (int) env('RATELIMIT_BOOKING', 20),
         'admin' => (int) env('RATELIMIT_ADMIN', 240),
+        'home' => (int) env('RATELIMIT_HOME', 120),
     ],
 
     // Yemeni governorates — canonical list used for geo tagging / dispatch routing.

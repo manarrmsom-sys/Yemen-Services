@@ -10,6 +10,7 @@ use App\Services\Dispatch\DispatchService;
 use App\Services\Orders\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BookingController extends Controller
 {
@@ -44,15 +45,28 @@ class BookingController extends Controller
 
         $order = $this->orders->createFromBooking($data, $user);
 
-        // Fire the WhatsApp geo-dispatch ("Gap Play") immediately.
-        $job = $this->dispatch->dispatchOrder($order, mode: 'broadcast');
+        // Dispatch is a follow-up integration; a provider timeout must not erase a valid order.
+        $job = null;
+        $dispatchError = null;
+        try {
+            $job = $this->dispatch->dispatchOrder($order, mode: 'broadcast');
+        } catch (\Throwable $e) {
+            $dispatchError = __('errors.dispatch_unavailable');
+            Log::error('[booking] dispatch failed after order creation', [
+                'order_id' => $order->id,
+                'reference' => $order->reference,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+        }
 
         return response()->json([
             'data' => [
                 'order' => $this->orders->summary($order->fresh()),
                 'dispatch' => [
-                    'wa_deeplink' => $job->wa_deeplink,
-                    'status' => $job->status->value,
+                    'wa_deeplink' => $job?->wa_deeplink,
+                    'status' => $job?->status->value ?? 'unavailable',
+                    'error' => $dispatchError,
                 ],
                 'price_breakdown' => $order->price_breakdown,
             ],

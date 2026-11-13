@@ -16,11 +16,13 @@ class AuthController extends Controller
     public function requestOtp(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone' => ['required', 'string', 'max:20', 'regex:/^\+?[0-9\s\-]{7,20}$/'],
-            'channel' => ['nullable', Rule::in(['whatsapp', 'sms'])],
+            'channel' => ['nullable', Rule::in(['email', 'whatsapp', 'sms'])],
+            'email' => ['required_without:phone', 'nullable', 'email', 'max:255'],
+            'phone' => ['required_without:email', 'nullable', 'string', 'max:20', 'regex:/^\+?[0-9\s\-]{7,20}$/'],
         ]);
 
-        $result = $this->otp->request($data['phone'], $data['channel'] ?? null, $request->ip());
+        $channel = $data['channel'] ?? (isset($data['email']) ? 'email' : 'whatsapp');
+        $result = $this->otp->request($channel === 'email' ? $data['email'] : $data['phone'], $channel, $request->ip());
 
         return response()->json(['data' => $result]);
     }
@@ -34,22 +36,27 @@ class AuthController extends Controller
             'device_name' => ['nullable', 'string', 'max:60'],
         ]);
 
-        $phone = $this->otp->verify($data['session_token'], $data['code'], $request->ip());
+        $identity = $this->otp->verify($data['session_token'], $data['code'], $request->ip());
+
+        // Resolve the account by whichever identity the OTP was issued for. Never
+        // look up by a null column, or a phone login would match an arbitrary user.
+        $viaEmail = filled($identity['email']);
+        $verifiedColumn = $viaEmail ? 'email_verified_at' : 'phone_verified_at';
 
         $user = User::firstOrCreate(
-            ['phone' => $phone],
+            $viaEmail ? ['email' => $identity['email']] : ['phone' => $identity['phone']],
             [
                 'name' => $data['name'] ?? null,
                 'role' => 'customer',
                 'status' => 'active',
                 'preferred_locale' => app()->getLocale(),
                 'registration_ip' => $request->ip(),
-                'phone_verified_at' => now(),
+                $verifiedColumn => now(),
             ],
         );
 
-        if (! $user->phone_verified_at) {
-            $user->forceFill(['phone_verified_at' => now()])->save();
+        if (! $user->{$verifiedColumn}) {
+            $user->forceFill([$verifiedColumn => now()])->save();
         }
         if (($data['name'] ?? null) && ! $user->name) {
             $user->update(['name' => $data['name']]);

@@ -243,6 +243,9 @@ class TradespersonController extends Controller
         $card = [
             'id' => $p->id,
             'display_name' => $p->display_name,
+            'image_url' => $p->image_url,
+            'headline_ar' => $p->headline_ar,
+            'headline_en' => $p->headline_en,
             'headline' => $locale === 'ar' ? $p->headline_ar : $p->headline_en,
             'category' => $p->primaryCategory ? ($locale === 'ar' ? $p->primaryCategory->name_ar : $p->primaryCategory->name_en) : null,
             'governorate' => $p->baseGovernorate?->localizedName($locale),

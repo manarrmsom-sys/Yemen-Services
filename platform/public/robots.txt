@@ -7,3 +7,5 @@ Disallow: /account
 Disallow: /trade
 Disallow: /api
 Disallow: /webhooks
+
+Sitemap: https://yemenservices.example/sitemap.xml

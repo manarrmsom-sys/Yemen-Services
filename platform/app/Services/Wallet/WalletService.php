@@ -79,7 +79,9 @@ class WalletService
                 $column = $wallet->bucketColumn($leg->bucket);
                 $wallet->{$column} += $leg->signedDelta();
 
-                if (in_array($leg->bucket, ['available', 'pending'], true) && $wallet->{$column} < 0) {
+                $allowsExternalClearing = $wallet->type === WalletType::PlatformClearing
+                    && $leg->bucket === 'available';
+                if (! $allowsExternalClearing && in_array($leg->bucket, ['available', 'pending'], true) && $wallet->{$column} < 0) {
                     throw new RuntimeException("Insufficient {$leg->bucket} balance on wallet #{$wallet->id}.");
                 }
 
@@ -117,13 +119,15 @@ class WalletService
     public function confirmTopup(WalletTopup $topup): string
     {
         $wallet = $topup->wallet;
-        $escrow = $this->systemWallet(WalletType::PlatformEscrow);
+        // The clearing account is the counter-leg for cash/bank money received outside
+        // the platform. Its negative balance represents an external funding source.
+        $clearing = $this->systemWallet(WalletType::PlatformClearing);
 
         return $this->post([
             new LedgerLeg($wallet, 'credit', 'available', $topup->amount, 'topup',
                 "Top-up {$topup->reference_code}", $topup, ['method' => $topup->method]),
-            new LedgerLeg($escrow, 'credit', 'available', $topup->amount, 'topup',
-                "Custody of top-up #{$topup->id}", $topup),
+            new LedgerLeg($clearing, 'debit', 'available', $topup->amount, 'topup',
+                "External clearing for top-up #{$topup->id}", $topup),
         ]);
     }
 
@@ -142,12 +146,12 @@ class WalletService
 
         $wallet = $this->walletFor($profile);
         $revenue = $this->systemWallet(WalletType::PlatformRevenue);
-        $escrow = $this->systemWallet(WalletType::PlatformEscrow);
+        $clearing = $this->systemWallet(WalletType::PlatformClearing);
 
         $subtotal = $order->subtotal;
         $commission = $order->commission_amount ?: (int) round($subtotal * $order->commission_percent / 100);
 
-        return DB::transaction(function () use ($order, $profile, $wallet, $revenue, $escrow, $subtotal, $commission) {
+        return DB::transaction(function () use ($order, $profile, $wallet, $revenue, $clearing, $subtotal, $commission) {
             $entry = CommissionEntry::updateOrCreate(
                 ['order_id' => $order->id],
                 [
@@ -160,12 +164,12 @@ class WalletService
                 ],
             );
 
-            // Accrual: commission_due up on the tradesperson; receivable recognised as revenue-pending.
+            // Accrual: commission_due increases against the external clearing account.
             $this->post([
                 new LedgerLeg($wallet, 'credit', 'commission_due', $commission, 'commission_accrual',
                     "Commission accrued for {$order->reference}", $order),
-                new LedgerLeg($revenue, 'credit', 'pending', $commission, 'commission_accrual',
-                    "Receivable for {$order->reference}", $order),
+                new LedgerLeg($clearing, 'debit', 'available', $commission, 'commission_accrual',
+                    "Commission receivable for {$order->reference}", $order),
             ]);
 
             // Book the gross earning as a lifetime stat (cash is off-ledger with COD).
@@ -184,7 +188,8 @@ class WalletService
             ]);
             $wallet->increment('lifetime_earnings', $subtotal);
 
-            // Immediate settlement from prepaid float.
+            // Immediate settlement from prepaid float. Wallet debits clear the
+            // float and commission_due; revenue and clearing credits balance it.
             $wallet->refresh();
             $settleable = min($commission, max(0, $wallet->available_balance));
             if ($settleable > 0) {
@@ -193,12 +198,10 @@ class WalletService
                         "Commission settled for {$order->reference}", $order),
                     new LedgerLeg($wallet, 'debit', 'commission_due', $settleable, 'commission_charge',
                         "Clear commission_due for {$order->reference}", $order),
-                    new LedgerLeg($escrow, 'debit', 'available', $settleable, 'commission_charge',
-                        "Release custody for {$order->reference}", $order),
-                    new LedgerLeg($revenue, 'debit', 'pending', $settleable, 'commission_charge',
-                        "Recognise receivable for {$order->reference}", $order),
                     new LedgerLeg($revenue, 'credit', 'available', $settleable, 'commission_charge',
                         "Commission income {$order->reference}", $order),
+                    new LedgerLeg($clearing, 'credit', 'available', $settleable, 'commission_charge',
+                        "Clear commission receivable for {$order->reference}", $order),
                 ]);
             }
 

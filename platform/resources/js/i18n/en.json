@@ -22,6 +22,18 @@
         "why_price": "Transparent pricing before booking",
         "why_fast": "Instant dispatch over WhatsApp"
     },
+    "footer": {
+        "legal_title": "Important links",
+        "terms": "Terms & conditions",
+        "privacy": "Privacy policy",
+        "customer_rights": "Customer protection",
+        "contact_title": "Contact us",
+        "customer_service": "Customer service",
+        "whatsapp_support": "WhatsApp support",
+        "trust_title": "Trust & security",
+        "local_payments": "Secure local payments",
+        "secure_platform": "Protected platform"
+    },
     "booking": {
         "title": "Book a service",
         "step_service": "Service",
@@ -66,15 +78,17 @@
         "note": "This is an estimate and may change after assessment."
     },
     "auth": {
-        "login_title": "Sign in with your phone",
-        "phone_label": "Mobile number",
+        "login_title": "Sign in with your email",
+        "email_label": "Email address",
         "send_code": "Send verification code",
         "code_label": "Verification code",
         "verify": "Verify & sign in",
         "resend": "Resend code",
         "channel_whatsapp": "WhatsApp",
         "channel_sms": "SMS",
-        "name_optional": "Name (optional)"
+        "name_optional": "Name (optional)",
+        "name_required": "Your name is required to send the request.",
+        "phone_required": "A mobile number is required to send the request over WhatsApp."
     },
     "badges": {
         "verified": "Verified",
@@ -107,6 +121,9 @@
         "kyc": "KYC review",
         "wallets": "Wallets & commissions",
         "integrations": "Integrations & webhooks",
+        "categories": "Categories",
+        "services": "Services",
+        "pros": "Professionals",
         "orders_today": "Orders today",
         "open_orders": "Open orders",
         "pending_dispatch": "Pending dispatch",

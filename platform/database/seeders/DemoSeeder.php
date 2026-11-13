@@ -24,12 +24,12 @@ class DemoSeeder extends Seeder
         $electrical = ServiceCategory::where('slug', 'electrical')->first();
 
         $pros = [
-            ['+967711000001', 'أحمد الحداد', $plumbing, $sanaa, 'verified', 4.8, 32],
-            ['+967711000002', 'خالد الكهربائي', $electrical, $aden, 'verified', 4.9, 45],
-            ['+967711000003', 'محمد النجار', $plumbing, $sanaa, 'pending', 0, 0],
+            ['+967711000001', 'أحمد الحداد', $plumbing, $sanaa, 'verified', 4.8, 32, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=85'],
+            ['+967711000002', 'خالد الكهربائي', $electrical, $aden, 'verified', 4.9, 45, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=85'],
+            ['+967711000003', 'محمد النجار', $plumbing, $sanaa, 'pending', 0, 0, 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=85'],
         ];
 
-        foreach ($pros as [$phone, $name, $cat, $gov, $kyc, $rating, $count]) {
+        foreach ($pros as [$phone, $name, $cat, $gov, $kyc, $rating, $count, $image]) {
             $user = User::updateOrCreate(['phone' => $phone], [
                 'name' => $name, 'role' => 'tradesperson', 'status' => 'active',
                 'preferred_locale' => 'ar', 'phone_verified_at' => now(),
@@ -39,7 +39,7 @@ class DemoSeeder extends Seeder
                 'primary_category_id' => $cat->id,
                 'base_governorate_id' => $gov->id,
                 'service_governorate_ids' => [$gov->id],
-                'display_name' => $name,
+                'display_name' => $name, 'image_url' => $image,
                 'headline_ar' => 'خبرة في '.$cat->name_ar,
                 'headline_en' => 'Experienced in '.$cat->name_en,
                 'years_experience' => 8,
@@ -56,14 +56,16 @@ class DemoSeeder extends Seeder
 
             $w = $wallets->walletFor($profile);
             if ($kyc === 'verified') {
-                // seed a commission float
-                $topup = $w->topups()->create([
+                // Seed a commission float through WalletService's balanced clearing entry.
+                $topup = $w->topups()->firstOrCreate(['reference_code' => 'SEED-'.$profile->id], [
                     'tradesperson_profile_id' => $profile->id,
                     'amount' => 50000, 'currency' => 'YER', 'method' => 'bank_transfer',
-                    'reference_code' => 'SEED-'.$profile->id, 'status' => 'pending',
+                    'status' => 'pending',
                 ]);
-                $topup->update(['status' => 'confirmed', 'confirmed_at' => now()]);
-                $wallets->confirmTopup($topup);
+                if ($topup->status !== 'confirmed') {
+                    $topup->update(['status' => 'confirmed', 'confirmed_at' => now()]);
+                    $wallets->confirmTopup($topup);
+                }
             }
         }
 

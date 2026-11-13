@@ -7,6 +7,7 @@ use App\Models\OtpCode;
 use App\Services\Messaging\ChannelManager;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -20,14 +21,15 @@ class OtpService
      *
      * @return array{session_token: string, expires_at: string, channel: string, resend_in: int}
      */
-    public function request(string $phone, ?string $channel = null, ?string $ip = null, string $purpose = 'login'): array
+    public function request(string $recipient, ?string $channel = null, ?string $ip = null, string $purpose = 'login'): array
     {
         $cfg = config('platform.otp');
-        $phone = $this->normalize($phone);
         $channel = OtpChannel::tryFrom($channel ?? $cfg['default_channel']) ?? OtpChannel::from($cfg['default_channel']);
+        $recipient = $channel === OtpChannel::Email ? strtolower(trim($recipient)) : $this->normalizePhone($recipient);
+        $identityColumn = $channel === OtpChannel::Email ? 'email' : 'phone';
 
         // Resend cooldown — one active issuance per phone within the window.
-        $recent = OtpCode::where('phone', $phone)
+        $recent = OtpCode::where($identityColumn, $recipient)
             ->where('purpose', $purpose)
             ->whereNull('consumed_at')
             ->where('created_at', '>', now()->subSeconds($cfg['resend_cooldown_seconds']))
@@ -42,15 +44,19 @@ class OtpService
         }
 
         $code = $this->generateCode($cfg['length']);
+        if (app()->environment('local')) {
+            Log::info("OTP Code for {$recipient}: {$code}");
+        }
         $sessionToken = Str::random(48);
         $expiresAt = now()->addSeconds($cfg['ttl_seconds']);
 
         // Invalidate previous unconsumed codes for this phone/purpose.
-        OtpCode::where('phone', $phone)->where('purpose', $purpose)->whereNull('consumed_at')
+        OtpCode::where($identityColumn, $recipient)->where('purpose', $purpose)->whereNull('consumed_at')
             ->update(['consumed_at' => now()]);
 
         OtpCode::create([
-            'phone' => $phone,
+            'phone' => $channel === OtpChannel::Email ? null : $recipient,
+            'email' => $channel === OtpChannel::Email ? $recipient : null,
             'code_hash' => Hash::make($code),
             'channel' => $channel,
             'purpose' => $purpose,
@@ -60,12 +66,13 @@ class OtpService
         ]);
 
         $this->channels->for($channel)->send(
-            $phone,
+            $recipient,
             __('auth.otp_message', ['code' => $code, 'app' => config('app.name'), 'minutes' => (int) ($cfg['ttl_seconds'] / 60)]),
             [
                 'template' => $channel === OtpChannel::WhatsApp ? config('platform.whatsapp.otp_template') : null,
                 'params' => [$code],
                 'language' => app()->getLocale(),
+                'subject' => __('auth.otp_subject'),
             ],
         );
 
@@ -80,7 +87,7 @@ class OtpService
     /**
      * Verify a submitted code. Returns the normalized phone on success.
      */
-    public function verify(string $sessionToken, string $code, ?string $ip = null): string
+    public function verify(string $sessionToken, string $code, ?string $ip = null): array
     {
         $cfg = config('platform.otp');
 
@@ -107,7 +114,7 @@ class OtpService
 
         $otp->update(['consumed_at' => now()]);
 
-        return $otp->phone;
+        return ['phone' => $otp->phone, 'email' => $otp->email];
     }
 
     public function throttleKey(string $scope, string $identifier): string
@@ -130,7 +137,7 @@ class OtpService
         return str_pad((string) random_int(0, (10 ** $length) - 1), $length, '0', STR_PAD_LEFT);
     }
 
-    private function normalize(string $phone): string
+    private function normalizePhone(string $phone): string
     {
         $digits = preg_replace('/[^0-9+]/', '', $phone);
         $digits = ltrim($digits, '+');

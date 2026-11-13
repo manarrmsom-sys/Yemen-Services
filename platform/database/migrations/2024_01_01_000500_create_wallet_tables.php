@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // One wallet per tradesperson + system wallets (platform_escrow, platform_revenue).
+        // One wallet per tradesperson + system wallets (platform_escrow, platform_revenue, platform_clearing).
         Schema::create('wallets', function (Blueprint $table) {
             $table->id();
             $table->nullableMorphs('owner');                       // tradesperson_profile OR null for system wallets

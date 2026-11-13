@@ -1,14 +1,33 @@
-import '../css/app.css';
-
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
+import { router } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { ZiggyVue } from 'ziggy-js';
 import { createI18n } from 'vue-i18n';
+import { registerSW } from 'virtual:pwa-register';
 import ar from './i18n/ar.json';
 import en from './i18n/en.json';
 
 const appName = import.meta.env.VITE_APP_NAME || 'خدمات اليمن';
+
+// Keep the development server free from stale service-worker caches.
+if (import.meta.env.PROD) {
+    registerSW({ immediate: true });
+} else if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => registration.unregister());
+    });
+    if ('caches' in window) {
+        caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
+    }
+}
+
+router.on('invalid', (event) => {
+    if (event.detail.response?.status === 419) {
+        window.alert('انتهت جلسة الصفحة. سيتم تحديثها الآن.');
+        window.location.reload();
+    }
+});
 
 createInertiaApp({
     title: (title) => (title ? `${title} · ${appName}` : appName),

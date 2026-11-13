@@ -106,12 +106,38 @@ function back() {
 async function submit() {
     submitting.value = true;
     Object.keys(errors).forEach((k) => delete errors[k]);
+
+    const payload = {
+        service_id: Number(form.service_id),
+        governorate_id: Number(form.governorate_id),
+        quantity: Number(form.quantity),
+        hours: Number(form.hours),
+        district: form.district.trim(),
+        directions: form.directions.trim(),
+        urgency: form.urgency,
+        contact_name: form.contact_name.trim(),
+        contact_phone: form.contact_phone.trim(),
+        payment_method: form.payment_method,
+        notes: form.notes.trim(),
+        channel: 'pwa',
+    };
+
+    if (!payload.contact_name) errors.contact_name = [t('booking.name_required')];
+    if (!payload.contact_phone) errors.contact_phone = [t('booking.phone_required')];
+    if (Object.keys(errors).length) {
+        submitting.value = false;
+        return;
+    }
+
     try {
-        const { data } = await api.post('/bookings', { ...form, channel: 'pwa' });
+        const { data } = await api.post('/bookings', payload);
         result.value = data;
     } catch (e) {
-        if (e.response?.status === 422) Object.assign(errors, e.response.data.errors || {});
-        else errors._ = t('common.error');
+        if (e.response?.status === 422) {
+            Object.assign(errors, e.response.data.errors || {});
+        } else {
+            errors._ = e.response?.data?.message || t('common.error');
+        }
     } finally {
         submitting.value = false;
     }
@@ -155,6 +181,7 @@ function close() {
                             <h3 class="text-lg font-extrabold">{{ t('booking.success_title') }}</h3>
                             <p class="text-sm text-obsidian-900/60">{{ t('booking.success_sub') }}</p>
                             <p class="chip mx-auto bg-obsidian-100">{{ t('order.reference') }}: {{ result.order.reference }}</p>
+                            <p v-if="result.dispatch?.error" class="border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-6 text-amber-800">{{ result.dispatch.error }}</p>
                             <PriceBreakdown :quote="result.price_breakdown" />
                             <WhatsAppButton v-if="result.dispatch?.wa_deeplink" :href="result.dispatch.wa_deeplink" />
                             <a :href="`/track/${result.order.reference}`" class="btn-ghost w-full">{{ t('order.track_title') }}</a>
@@ -228,7 +255,7 @@ function close() {
                         <!-- STEP 3 — contact -->
                         <div v-else class="space-y-4">
                             <div>
-                                <label class="block text-sm font-semibold">{{ t('booking.name') }}</label>
+                                <label class="block text-sm font-semibold">{{ t('booking.name') }} <span class="text-crimson">*</span></label>
                                 <input v-model="form.contact_name" class="field" />
                                 <p v-if="errors.contact_name" class="mt-1 text-xs text-crimson">{{ errors.contact_name[0] }}</p>
                             </div>
@@ -256,6 +283,11 @@ function close() {
                                 <textarea v-model="form.notes" rows="2" class="field" />
                             </div>
                             <p v-if="errors._" class="text-xs text-crimson">{{ errors._ }}</p>
+                            <div v-if="Object.keys(errors).some((key) => key !== '_')" class="space-y-1 text-xs text-crimson">
+                                <p v-for="(messages, field) in errors" :key="field">
+                                    <span v-if="field !== '_'">{{ messages[0] }}</span>
+                                </p>
+                            </div>
                         </div>
 
                         <!-- live estimate on steps 2 & 3 -->

@@ -22,6 +22,18 @@
         "why_price": "تسعيرة شفافة قبل الحجز",
         "why_fast": "إرسال فوري عبر واتساب"
     },
+    "footer": {
+        "legal_title": "روابط مهمة",
+        "terms": "الشروط والأحكام",
+        "privacy": "سياسة الخصوصية",
+        "customer_rights": "ضمان حقوق العملاء",
+        "contact_title": "تواصل معنا",
+        "customer_service": "خدمة العملاء",
+        "whatsapp_support": "الدعم عبر واتساب",
+        "trust_title": "ثقة وأمان",
+        "local_payments": "دفع محلي آمن",
+        "secure_platform": "منصة محمية"
+    },
     "booking": {
         "title": "حجز خدمة",
         "step_service": "الخدمة",
@@ -66,15 +78,17 @@
         "note": "السعر تقديري وقد يتغير بعد المعاينة."
     },
     "auth": {
-        "login_title": "الدخول برقم الجوال",
-        "phone_label": "رقم الجوال",
+        "login_title": "تسجيل الدخول عبر البريد الإلكتروني",
+        "email_label": "البريد الإلكتروني",
         "send_code": "إرسال رمز التحقق",
         "code_label": "رمز التحقق",
         "verify": "تحقق ودخول",
         "resend": "إعادة إرسال الرمز",
         "channel_whatsapp": "واتساب",
         "channel_sms": "رسالة SMS",
-        "name_optional": "الاسم (اختياري)"
+        "name_optional": "الاسم (اختياري)",
+        "name_required": "الاسم مطلوب لإرسال الطلب.",
+        "phone_required": "رقم الجوال مطلوب لإرسال الطلب عبر واتساب."
     },
     "badges": {
         "verified": "موثّق",
@@ -107,6 +121,9 @@
         "kyc": "توثيق الفنيين",
         "wallets": "المحافظ والعمولات",
         "integrations": "التكاملات والويبهوك",
+        "categories": "الأقسام",
+        "services": "الخدمات",
+        "pros": "المحترفون",
         "orders_today": "طلبات اليوم",
         "open_orders": "طلبات مفتوحة",
         "pending_dispatch": "بانتظار التوزيع",

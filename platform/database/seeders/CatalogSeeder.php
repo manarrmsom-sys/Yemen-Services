@@ -13,43 +13,43 @@ class CatalogSeeder extends Seeder
     {
         // amounts are integer YER
         $data = [
-            ['plumbing', 'السباكة', 'Plumbing', '🔧', '#CE1126', [
+            ['plumbing', 'السباكة', 'Plumbing', '🔧', '#CE1126', 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=85', [
                 ['leak-repair', 'إصلاح تسريب', 'Leak repair', 'fixed', ['base_price' => 6000, 'callout_fee' => 2000]],
                 ['water-heater', 'تركيب سخان', 'Water heater install', 'fixed', ['base_price' => 9000, 'callout_fee' => 2000]],
                 ['full-piping', 'تمديدات كاملة', 'Full re-piping', 'quote', ['callout_fee' => 3000]],
             ]],
-            ['electrical', 'الكهرباء', 'Electrical', '⚡', '#CE1126', [
+            ['electrical', 'الكهرباء', 'Electrical', '⚡', '#CE1126', 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=900&q=85', [
                 ['fault-fix', 'إصلاح عطل', 'Fault diagnosis & fix', 'hourly', ['hourly_rate' => 4000, 'callout_fee' => 2000]],
                 ['lighting', 'تركيب إنارة', 'Lighting installation', 'per_unit', ['unit_price' => 1500, 'unit_label_ar' => 'نقطة', 'unit_label_en' => 'point', 'callout_fee' => 2000]],
             ]],
-            ['ac', 'التكييف والتبريد', 'AC & Cooling', '❄️', '#CE1126', [
+            ['ac', 'التكييف والتبريد', 'AC & Cooling', '❄️', '#CE1126', 'https://images.unsplash.com/photo-1631545806609-2d4c09b6e5b3?auto=format&fit=crop&w=900&q=85', [
                 ['ac-service', 'صيانة مكيف', 'AC service', 'per_unit', ['unit_price' => 5000, 'unit_label_ar' => 'وحدة', 'unit_label_en' => 'unit', 'callout_fee' => 2000]],
                 ['ac-install', 'تركيب مكيف', 'AC installation', 'per_unit', ['unit_price' => 12000, 'unit_label_ar' => 'وحدة', 'unit_label_en' => 'unit', 'callout_fee' => 3000]],
             ]],
-            ['carpentry', 'النجارة', 'Carpentry', '🪚', '#CE1126', [
+            ['carpentry', 'النجارة', 'Carpentry', '🪚', '#CE1126', 'https://images.unsplash.com/photo-1601058268499-e52658b8bb88?auto=format&fit=crop&w=900&q=85', [
                 ['furniture-repair', 'إصلاح أثاث', 'Furniture repair', 'hourly', ['hourly_rate' => 3500, 'callout_fee' => 1500]],
                 ['kitchen', 'تفصيل مطبخ', 'Fitted kitchen', 'quote', ['callout_fee' => 3000]],
             ]],
-            ['cleaning', 'التنظيف', 'Cleaning', '🧽', '#CE1126', [
+            ['cleaning', 'التنظيف', 'Cleaning', '🧽', '#CE1126', 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=85', [
                 ['home-deep-clean', 'تنظيف عميق', 'Home deep clean', 'per_unit', ['unit_price' => 800, 'unit_label_ar' => 'م²', 'unit_label_en' => 'm²', 'callout_fee' => 1000]],
                 ['tank-cleaning', 'تنظيف خزان', 'Water tank cleaning', 'fixed', ['base_price' => 7000, 'callout_fee' => 1000]],
             ]],
-            ['painting', 'الدهان', 'Painting', '🎨', '#CE1126', [
+            ['painting', 'الدهان', 'Painting', '🎨', '#CE1126', 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?auto=format&fit=crop&w=900&q=85', [
                 ['interior-paint', 'دهان داخلي', 'Interior painting', 'per_unit', ['unit_price' => 600, 'unit_label_ar' => 'م²', 'unit_label_en' => 'm²', 'callout_fee' => 1500]],
             ]],
-            ['appliances', 'صيانة الأجهزة', 'Appliance repair', '🔌', '#CE1126', [
+            ['appliances', 'صيانة الأجهزة', 'Appliance repair', '🔌', '#CE1126', 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=85', [
                 ['washing-machine', 'غسالة', 'Washing machine repair', 'fixed', ['base_price' => 5000, 'callout_fee' => 2000]],
                 ['fridge', 'ثلاجة', 'Refrigerator repair', 'fixed', ['base_price' => 6000, 'callout_fee' => 2000]],
             ]],
-            ['commercial', 'خدمات الشركات', 'Commercial', '🏢', '#0F172A', [
+            ['commercial', 'خدمات الشركات', 'Commercial', '🏢', '#0F172A', 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=900&q=85', [
                 ['office-maintenance', 'عقد صيانة مكتب', 'Office maintenance contract', 'quote', ['callout_fee' => 0]],
                 ['generator-service', 'صيانة مولد', 'Generator service', 'hourly', ['hourly_rate' => 6000, 'callout_fee' => 3000]],
             ]],
         ];
 
-        foreach ($data as $i => [$slug, $ar, $en, $icon, $color, $services]) {
+        foreach ($data as $i => [$slug, $ar, $en, $icon, $color, $image, $services]) {
             $category = ServiceCategory::updateOrCreate(['slug' => $slug], [
-                'name_ar' => $ar, 'name_en' => $en, 'icon' => $icon, 'accent_color' => $color,
+                'name_ar' => $ar, 'name_en' => $en, 'icon' => $icon, 'accent_color' => $color, 'image_url' => $image,
                 'sort_order' => $i, 'requires_kyc' => true, 'is_active' => true,
             ]);
 

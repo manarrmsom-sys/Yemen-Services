@@ -1,5 +1,5 @@
 # Local / staging stack. Production runs on a VPS with system Nginx + PHP-FPM
-# (see deploy/nginx.conf, deploy/supervisor.conf) — this file is for parity while developing.
+# (see deploy/nginx.conf, deploy/supervisor.conf). Secrets here are development-only.
 version: '3.8'
 
 services:
@@ -9,13 +9,37 @@ services:
       dockerfile: ../deploy/Dockerfile
     volumes:
       - ./platform:/var/www/html
-    depends_on: [mysql, redis]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - '9000'
+    command: php-fpm -F
+    healthcheck:
+      test: ['CMD-SHELL', 'php-fpm -t']
+      interval: 10s
+      timeout: 5s
+      retries: 5
     environment:
       DB_HOST: mysql
       REDIS_HOST: redis
+      REDIS_CLIENT: predis
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      app:
+        condition: service_healthy
+    volumes:
+      - ./platform:/var/www/html:ro
+      - ./deploy/nginx-docker.conf:/etc/nginx/conf.d/default.conf:ro
     ports:
-      - '8000:8000'
-    command: php artisan serve --host=0.0.0.0 --port=8000
+      - '8000:80'
 
   queue:
     build:
@@ -23,11 +47,19 @@ services:
       dockerfile: ../deploy/Dockerfile
     volumes:
       - ./platform:/var/www/html
-    depends_on: [mysql, redis]
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: php artisan queue:work redis --tries=3 --sleep=1
     environment:
       DB_HOST: mysql
       REDIS_HOST: redis
-    command: php artisan queue:work redis --tries=3 --sleep=1
+      REDIS_CLIENT: predis
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
 
   vite:
     image: node:22-alpine
@@ -50,11 +82,21 @@ services:
     volumes:
       - db-data:/var/lib/mysql
     command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-proot']
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
     ports:
       - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   db-data:

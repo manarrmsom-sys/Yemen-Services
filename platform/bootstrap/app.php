@@ -56,6 +56,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (Throwable $e, Request $request) {
+            // Let the framework render these: 422 with per-field errors, and 401.
+            // Without this they fell through to the generic branch below as a 500.
+            if ($e instanceof \Illuminate\Validation\ValidationException
+                || $e instanceof \Illuminate\Auth\AuthenticationException) {
+                return null;
+            }
+
             if ($request->is('api/*') || $request->expectsJson()) {
                 $status = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
                 $status = $status >= 400 && $status < 600 ? $status : 500;

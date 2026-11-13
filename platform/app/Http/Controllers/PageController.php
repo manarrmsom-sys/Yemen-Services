@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Governorate;
 use App\Models\Order;
 use App\Models\ServiceCategory;
+use App\Models\TradespersonProfile;
+use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,10 +18,30 @@ class PageController extends Controller
     {
         return Inertia::render('Home', [
             'governorates' => fn () => $this->governorates(),
-            'featuredPros' => fn () => \App\Models\TradespersonProfile::where('kyc_status', 'verified')
+            'featuredPros' => fn () => Cache::remember('home:featured-pros:v2', 300, fn () => TradespersonProfile::where('kyc_status', 'verified')
                 ->orderByDesc('rating_avg')->limit(6)
-                ->get(['id', 'display_name', 'headline_ar', 'headline_en', 'rating_avg', 'rating_count', 'badges', 'completed_orders']),
+                ->get(['id', 'display_name', 'image_url', 'headline_ar', 'headline_en', 'rating_avg', 'rating_count', 'badges', 'completed_orders'])),
         ]);
+    }
+
+    public function sitemap(): HttpResponse
+    {
+        $urls = Cache::remember('seo:sitemap', 3600, function (): array {
+            $base = rtrim(config('app.url'), '/');
+            $categories = ServiceCategory::active()->get(['slug', 'updated_at']);
+
+            return [
+                ['loc' => $base.'/', 'lastmod' => now()->toAtomString(), 'priority' => '1.0'],
+                ['loc' => $base.'/pros', 'lastmod' => now()->toAtomString(), 'priority' => '0.8'],
+                ...$categories->map(fn ($category) => [
+                    'loc' => $base.'/services/'.$category->slug,
+                    'lastmod' => $category->updated_at?->toAtomString(),
+                    'priority' => '0.7',
+                ])->all(),
+            ];
+        });
+
+        return response()->view('sitemap', compact('urls'))->header('Content-Type', 'application/xml');
     }
 
     public function category(ServiceCategory $category): Response
@@ -109,12 +132,12 @@ class PageController extends Controller
     {
         $locale = app()->getLocale();
 
-        return Governorate::where('is_active', true)->orderBy('name_'.$locale)->get()
+        return Cache::remember("governorates:{$locale}", 900, fn () => Governorate::where('is_active', true)->orderBy('name_'.$locale)->get()
             ->map(fn ($g) => [
                 'id' => $g->id,
                 'code' => $g->code,
                 'name' => $g->localizedName($locale),
                 'dispatch_multiplier' => $g->dispatch_multiplier,
-            ]);
+            ]));
     }
 }

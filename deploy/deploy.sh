@@ -38,11 +38,11 @@ composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
 # --- database + caches ---
 php artisan migrate --force
-php artisan storage:link || true
+php artisan storage:link
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
-php artisan event:cache || true
+php artisan event:cache
 
 # --- flip the symlink atomically ---
 ln -sfn "$APP" "$DEPLOY_PATH/current"
@@ -56,5 +56,5 @@ sudo supervisorctl restart yemen-queue:* || true
 cd "$DEPLOY_PATH/releases"
 ls -1dt */ | tail -n +$((KEEP_RELEASES + 1)) | xargs -r rm -rf
 
-php artisan up || true
+php artisan up
 echo "✓ Deployed $(basename "$RELEASE")"

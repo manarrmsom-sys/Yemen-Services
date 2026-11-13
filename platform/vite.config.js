@@ -10,9 +10,16 @@ export default defineConfig({
             '@': fileURLToPath(new URL('./resources/js', import.meta.url)),
         },
     },
+    server: {
+        host: '127.0.0.1',
+        port: 5173,
+        hmr: {
+            host: '127.0.0.1',
+        },
+    },
     plugins: [
         laravel({
-            input: 'resources/js/app.js',
+            input: ['resources/js/app.js', 'resources/css/app.css'],
             refresh: true,
         }),
         vue({
@@ -25,7 +32,8 @@ export default defineConfig({
         }),
         VitePWA({
             registerType: 'autoUpdate',
-            injectRegister: 'auto',
+            // Registration is explicit in resources/js/app.js so the app owns its lifecycle.
+            injectRegister: false,
             // The web manifest is served statically from public/manifest.webmanifest
             // (single source of truth, works even before an asset build).
             manifest: false,
