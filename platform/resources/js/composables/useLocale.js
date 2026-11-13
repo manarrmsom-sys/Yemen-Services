@@ -16,7 +16,8 @@ export function useLocale() {
         // Persist server-side (cookie + user preference) and re-fetch shared props.
         router.reload({
             data: { lang: next },
-            only: ['locale', 'dir', 'catalog', 'auth'],
+            // Every server-localised prop must be listed, or it keeps the old language.
+            only: ['locale', 'dir', 'catalog', 'auth', 'announcement', 'banners', 'featuredServices', 'governorates'],
             preserveScroll: true,
             preserveState: true,
         });

@@ -6,6 +6,7 @@ use App\Models\Governorate;
 use App\Models\Order;
 use App\Models\ServiceCategory;
 use App\Models\TradespersonProfile;
+use App\Services\Appearance\AppearanceService;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
@@ -14,14 +15,24 @@ use Inertia\Response;
 
 class PageController extends Controller
 {
-    public function home(): Response
+    public function home(AppearanceService $appearance): Response
     {
+        $locale = app()->getLocale();
+
         return Inertia::render('Home', [
+            'banners' => fn () => $appearance->banners($locale),
+            'featuredServices' => fn () => $appearance->featuredServices($locale),
+            'stats' => fn () => $appearance->stats(),
             'governorates' => fn () => $this->governorates(),
-            'featuredPros' => fn () => Cache::remember('home:featured-pros:v2', 300, fn () => TradespersonProfile::where('kyc_status', 'verified')
-                ->orderByDesc('rating_avg')->limit(6)
-                ->get(['id', 'display_name', 'image_url', 'headline_ar', 'headline_en', 'rating_avg', 'rating_count', 'badges', 'completed_orders'])),
+            'featuredPros' => fn () => $this->featuredPros(),
         ]);
+    }
+
+    private function featuredPros(): \Illuminate\Support\Collection
+    {
+        return Cache::remember('home:featured-pros:v2', 300, fn () => TradespersonProfile::where('kyc_status', 'verified')
+            ->orderByDesc('rating_avg')->limit(6)
+            ->get(['id', 'display_name', 'image_url', 'headline_ar', 'headline_en', 'rating_avg', 'rating_count', 'badges', 'completed_orders']));
     }
 
     public function sitemap(): HttpResponse
@@ -55,9 +66,15 @@ class PageController extends Controller
         ]);
     }
 
-    public function book(Request $request, ?string $service = null): Response
+    public function book(Request $request, AppearanceService $appearance, ?string $service = null): Response
     {
+        $locale = app()->getLocale();
+
         return Inertia::render('Home', [
+            'banners' => fn () => $appearance->banners($locale),
+            'featuredServices' => fn () => $appearance->featuredServices($locale),
+            'stats' => fn () => $appearance->stats(),
+            'featuredPros' => fn () => $this->featuredPros(),
             'openBooking' => true,
             'preselectServiceSlug' => $service,
             'governorates' => fn () => $this->governorates(),

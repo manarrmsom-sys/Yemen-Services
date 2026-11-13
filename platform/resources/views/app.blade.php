@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#0F172A">
+    <meta name="theme-color" content="#111315">
     <meta name="description" content="{{ __('منصة الخدمات المنزلية والتجارية عند الطلب في اليمن') }}">
 
     <title inertia>{{ config('app.name', 'Yemen Services') }}</title>
@@ -19,7 +19,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-    <link rel="mask-icon" href="/icons/icon.svg" color="#0F172A">
+    <link rel="mask-icon" href="/icons/icon.svg" color="#111315">
 
     @routes
     @vite(['resources/js/app.js', 'resources/css/app.css'])

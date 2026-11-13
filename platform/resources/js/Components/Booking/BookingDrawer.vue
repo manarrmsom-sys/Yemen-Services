@@ -156,7 +156,7 @@ function close() {
             enter-from-class="opacity-0"
             leave-to-class="opacity-0"
         >
-            <div v-if="open" class="fixed inset-0 z-50 flex items-end justify-center bg-obsidian-900/50 sm:items-center" @click.self="close">
+            <div v-if="open" data-lenis-prevent class="fixed inset-0 z-50 flex items-end justify-center bg-obsidian-900/50 backdrop-blur-[2px] sm:items-center" @click.self="close">
                 <div class="w-full max-w-lg animate-sheet-up rounded-t-3xl bg-white pb-safe shadow-sheet sm:rounded-3xl">
                     <!-- header -->
                     <div class="flex items-center justify-between border-b border-obsidian-100 px-5 py-4">

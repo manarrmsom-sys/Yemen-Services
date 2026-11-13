@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\ServiceCategory;
+use App\Services\Appearance\AppearanceService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -45,6 +46,8 @@ class HandleInertiaRequests extends Middleware
                 'currency' => config('platform.currency'),
                 'commission_percent' => config('platform.pricing.commission_percent'),
             ],
+            // Admin-managed announcement bar shown by the public layout.
+            'announcement' => fn () => app(AppearanceService::class)->announcement($locale),
             // Lightweight, cached catalog for the booking drawer — avoids an extra request.
             'catalog' => fn () => cache()->remember("catalog:{$locale}:v3", 300, fn () => ServiceCategory::query()
                 ->where('is_active', true)

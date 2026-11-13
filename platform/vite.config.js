@@ -88,6 +88,7 @@ export default defineConfig({
             output: {
                 manualChunks: {
                     vendor: ['vue', '@inertiajs/vue3', 'vue-i18n'],
+                    motion: ['gsap', 'gsap/ScrollTrigger', 'lenis'],
                 },
             },
         },

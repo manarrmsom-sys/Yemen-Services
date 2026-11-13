@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\AppearanceController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\DispatchController as AdminDispatchController;
 use App\Http\Controllers\Api\Admin\KycReviewController;
@@ -105,6 +106,10 @@ Route::prefix('v1')->group(function () {
 
         // Integration suite
         Route::middleware('admin')->group(function () {
+            // Storefront appearance: announcement bar, home banners, featured services.
+            Route::get('appearance', [AppearanceController::class, 'show']);
+            Route::put('appearance', [AppearanceController::class, 'update']);
+
             Route::apiResource('webhooks', WebhookEndpointController::class);
             Route::post('webhooks/{webhook}/test', [WebhookEndpointController::class, 'test']);
             Route::get('webhooks/{webhook}/deliveries', [WebhookEndpointController::class, 'deliveries']);

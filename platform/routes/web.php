@@ -31,16 +31,21 @@ Route::middleware(['auth', 'admin:dispatcher'])->prefix('admin')->name('admin.')
     Route::get('/categories', fn () => inertia('Admin/Categories'))->name('categories');
     Route::get('/services', fn () => inertia('Admin/Services'))->name('services');
     Route::get('/pros', fn () => inertia('Admin/Pros'))->name('pros');
+    Route::get('/appearance', fn () => inertia('Admin/Appearance'))->middleware('admin')->name('appearance');
     Route::get('/integrations', fn () => inertia('Admin/Integrations'))->middleware('admin')->name('integrations');
 });
 
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+// Local-only shortcut to preview the admin dashboard without an OTP round-trip.
+// It signs in as the seeded admin with no credentials, so it must never be
+// registered outside APP_ENV=local.
+if (app()->environment('local')) {
+    Route::get('/bypass-login', function () {
+        $admin = \App\Models\User::where('role', 'admin')->orderBy('id')->first();
+        abort_unless($admin, 404, 'No admin user. Run: php artisan migrate --seed');
+        \Illuminate\Support\Facades\Auth::login($admin);
 
-Route::get('/bypass-login', function () {
-    $admin = User::where('email', 'admin@yemenservices.example')->first();
-    Auth::login($admin);
-    return redirect('/admin');
-});
+        return redirect('/admin');
+    })->name('bypass-login');
+}
 
 require __DIR__.'/auth.php';

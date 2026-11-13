@@ -20,3 +20,6 @@ yarn-error.log
 /.vscode
 /.nova
 /.zed
+
+# Local SQLite preview database (scripts/preview.ps1)
+*.sqlite

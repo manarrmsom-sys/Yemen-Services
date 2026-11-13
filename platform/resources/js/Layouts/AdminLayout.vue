@@ -15,6 +15,7 @@ const nav = [
     ['admin.categories', 'admin.categories', '🗂️'],
     ['admin.services', 'admin.services', '🛠️'],
     ['admin.pros', 'admin.pros', '👥'],
+    ['admin.appearance', 'admin.appearance', '🎨'],
     ['admin.integrations', 'admin.integrations', '🔌'],
 ];
 </script>
@@ -37,7 +38,7 @@ const nav = [
             </nav>
         </aside>
 
-        <div class="flex-1">
+        <div class="min-w-0 flex-1">
             <header class="flex items-center justify-between border-b border-obsidian-100 bg-white px-4 py-3">
                 <p class="font-bold text-obsidian-900">{{ $slots.title ? '' : '' }}<slot name="title" /></p>
                 <div class="flex items-center gap-2">

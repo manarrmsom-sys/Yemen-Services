@@ -5,7 +5,10 @@
 @layer base {
     :root {
         --crimson: #ce1126;
-        --obsidian: #0f172a;
+        --obsidian: #111315;
+        --ink: #111315;
+        --ivory: #f8f9fa;
+        --gold: #d4af37;
     }
 
     html {
@@ -14,6 +17,16 @@
 
     body {
         text-rendering: optimizeLegibility;
+        @apply bg-ivory text-ink;
+    }
+
+    ::selection {
+        background: rgba(206, 17, 38, 0.16);
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--crimson);
+        outline-offset: 2px;
     }
 
     /* Latin runs inside Arabic UI pick up Inter automatically. */
@@ -33,7 +46,7 @@
                transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
     }
     .btn-primary {
-        @apply btn bg-crimson text-white shadow-card hover:bg-crimson-600;
+        @apply btn bg-crimson text-white shadow-glow hover:bg-crimson-600;
     }
     .btn-ghost {
         @apply btn bg-obsidian-100 text-obsidian-900 hover:bg-obsidian-100/70;
@@ -56,3 +69,43 @@
 /* Logical-property helpers so the same class works in RTL + LTR. */
 .start-0 { inset-inline-start: 0; }
 .end-0 { inset-inline-end: 0; }
+
+/* Verified / KYC badge: the only place gold is used. */
+.badge-kyc {
+    @apply inline-flex items-center gap-1 rounded-full border border-gold/50 bg-gold-50 px-2 py-0.5 text-[10px] font-bold text-gold-700;
+}
+
+/* Lenis smooth scrolling (see composables/useSmoothScroll.js). */
+html.lenis,
+html.lenis body {
+    height: auto;
+}
+.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+    overflow: clip;
+}
+
+/* Marquee pauses under the pointer and for keyboard users. */
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+    animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .marquee-track {
+        animation: none !important;
+    }
+}

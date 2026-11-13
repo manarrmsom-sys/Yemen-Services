@@ -1,0 +1,11 @@
+{
+    "version": "0.0.1",
+    "configurations": [
+        {
+            "name": "yemen-preview",
+            "runtimeExecutable": "powershell",
+            "runtimeArgs": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "platform/scripts/preview.ps1"],
+            "port": 8000
+        }
+    ]
+}

@@ -37,6 +37,7 @@ export function useApi() {
     return {
         get: (url, config) => client.get(url, config).then((r) => r.data),
         post: (url, data, config) => csrfCookie.then(() => client.post(url, data, config)).then((r) => r.data),
+        put: (url, data, config) => csrfCookie.then(() => client.put(url, data, config)).then((r) => r.data),
         patch: (url, data, config) => client.patch(url, data, config).then((r) => r.data),
         delete: (url, config) => client.delete(url, config).then((r) => r.data),
         raw: client,
