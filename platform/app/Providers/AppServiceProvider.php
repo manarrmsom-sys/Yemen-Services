@@ -61,6 +61,14 @@ class AppServiceProvider extends ServiceProvider
                 : null,
         ]));
 
+        // B2B quote requests: a real business sends one, not a stream.
+        RateLimiter::for('b2b', fn ($request) => array_filter([
+            Limit::perMinute(3)->by('ip:'.$request->ip()),
+            $request->input('phone')
+                ? Limit::perHour(5)->by('b2b-phone:'.sha1(preg_replace('/\D/', '', (string) $request->input('phone'))))
+                : null,
+        ]));
+
         RateLimiter::for('track', fn ($request) => Limit::perMinute(30)->by($request->ip()));
 
         RateLimiter::for('home', fn ($request) => Limit::perMinute($limits['home'])->by($request->ip()));

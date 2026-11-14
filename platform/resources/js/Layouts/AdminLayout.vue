@@ -16,6 +16,7 @@ const nav = [
     ['admin.services', 'admin.services', '🛠️'],
     ['admin.pros', 'admin.pros', '👥'],
     ['admin.zones', 'admin.zones', '📍'],
+    ['admin.b2b', 'admin.b2b', '🏢'],
     ['admin.appearance', 'admin.appearance', '🎨'],
     ['admin.integrations', 'admin.integrations', '🔌'],
 ];

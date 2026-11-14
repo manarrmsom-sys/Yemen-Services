@@ -55,6 +55,12 @@ return [
         'sender_id' => env('SMS_SENDER_ID', 'YemenSvc'),
     ],
 
+    'dispatch' => [
+        // An order nobody accepted within this many minutes is flagged for the
+        // operations room to step in.
+        'sla_minutes' => (int) env('DISPATCH_SLA_MINUTES', 10),
+    ],
+
     'wallet' => [
         // Prepaid float a tradesperson needs before they count as ready: it is
         // what COD commission is settled from.
@@ -63,6 +69,8 @@ return [
 
     'n8n' => [
         'dispatch_url' => env('N8N_WEBHOOK_DISPATCH_URL'),
+        // Instant notification for new B2B maintenance-contract requests.
+        'b2b_url' => env('N8N_WEBHOOK_B2B_URL'),
         'secret' => env('N8N_WEBHOOK_SECRET'),
     ],
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Admin\AppearanceController;
+use App\Http\Controllers\Api\Admin\B2bAdminController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\DispatchController as AdminDispatchController;
 use App\Http\Controllers\Api\Admin\KycReviewController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Api\Admin\ZoneAdminController;
 use App\Http\Controllers\Api\Admin\WalletAdminController;
 use App\Http\Controllers\Api\Admin\WebhookEndpointController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\B2bRequestController;
 use App\Http\Controllers\Api\BookingController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\EstimateController;
@@ -32,6 +34,9 @@ Route::prefix('v1')->group(function () {
     // ---- Launch zones + expansion waitlist ----
     Route::get('zones', [ZoneController::class, 'index']);
     Route::post('waitlist', [ZoneController::class, 'joinWaitlist'])->middleware('throttle:waitlist');
+
+    // ---- B2B maintenance-contract quote requests ----
+    Route::post('b2b-requests', [B2bRequestController::class, 'store'])->middleware('throttle:b2b');
 
     Route::post('estimate', [EstimateController::class, 'store'])->middleware('throttle:booking');
 
@@ -92,6 +97,12 @@ Route::prefix('v1')->group(function () {
         Route::post('orders/{order:reference}/dispatch', [AdminDispatchController::class, 'dispatch']);
         Route::get('dispatch/board', [AdminDispatchController::class, 'board']);
         Route::get('dispatch/{job}/payload', [AdminDispatchController::class, 'payload']);
+        Route::get('dispatch/{job}/alternates', [AdminDispatchController::class, 'alternates']);
+        Route::post('dispatch/{job}/nudge', [AdminDispatchController::class, 'nudge']);
+
+        // B2B maintenance-contract leads
+        Route::get('b2b-requests', [B2bAdminController::class, 'index']);
+        Route::patch('b2b-requests/{b2bRequest}', [B2bAdminController::class, 'update']);
 
         // KYC pipeline
         Route::get('kyc/queue', [KycReviewController::class, 'queue']);

@@ -35,6 +35,7 @@ Route::middleware(['auth', 'admin:dispatcher'])->prefix('admin')->name('admin.')
     Route::get('/services', fn () => inertia('Admin/Services'))->name('services');
     Route::get('/pros', fn () => inertia('Admin/Pros'))->name('pros');
     Route::get('/zones', fn () => inertia('Admin/Zones'))->name('zones');
+    Route::get('/b2b', fn () => inertia('Admin/B2b'))->name('b2b');
     Route::get('/appearance', fn () => inertia('Admin/Appearance'))->middleware('admin')->name('appearance');
     Route::get('/integrations', fn () => inertia('Admin/Integrations'))->middleware('admin')->name('integrations');
 });

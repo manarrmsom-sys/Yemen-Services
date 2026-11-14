@@ -9,6 +9,7 @@ import PriceEstimator from '@/Components/Home/PriceEstimator.vue';
 import HeroBackdrop from '@/Components/ui/HeroBackdrop.vue';
 import NumberTicker from '@/Components/ui/NumberTicker.vue';
 import SpotlightCard from '@/Components/ui/SpotlightCard.vue';
+import B2bRequestModal from '@/Components/Home/B2bRequestModal.vue';
 import { useScrollReveal } from '@/composables/useScrollReveal';
 import { scrollToTarget, setScrollLocked } from '@/composables/useSmoothScroll';
 import { useMoney } from '@/composables/useMoney';
@@ -38,7 +39,17 @@ function book(slug = null) {
     drawer.value = true;
 }
 // The drawer owns the scroll while it is open.
-watch(drawer, (open) => setScrollLocked(open));
+// ---- B2B maintenance contracts ------------------------------------------
+const b2bOpen = ref(false);
+const b2bSectors = computed(() => [
+    { icon: '🏨', label: ar.value ? 'الفنادق' : 'Hotels' },
+    { icon: '🍽️', label: ar.value ? 'المطاعم' : 'Restaurants' },
+    { icon: '🏥', label: ar.value ? 'العيادات' : 'Clinics' },
+    { icon: '🏘️', label: ar.value ? 'المجمعات السكنية' : 'Residential compounds' },
+]);
+
+// A modal owns the scroll while it is open.
+watch([drawer, b2bOpen], ([booking, b2b]) => setScrollLocked(booking || b2b));
 
 // ---- category search --------------------------------------------------
 const query = ref('');
@@ -357,8 +368,36 @@ const schema = computed(() => JSON.stringify({
                 </div>
             </section>
 
+            <!-- ============ B2B MAINTENANCE CONTRACTS ============ -->
+            <section id="business" class="scroll-mt-24 border-y border-ink-200 bg-white">
+                <div class="mx-auto grid max-w-6xl gap-8 px-4 py-14 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+                    <div data-reveal>
+                        <p class="text-sm font-bold text-crimson">05 / {{ ar ? 'للشركات والمنشآت' : 'For businesses' }}</p>
+                        <h2 class="mt-2 text-3xl font-black text-ink sm:text-4xl">{{ t('b2b.title') }}</h2>
+                        <p class="mt-3 max-w-xl text-base leading-8 text-ink-600">{{ t('b2b.sub') }}</p>
+                        <ul class="mt-5 grid max-w-xl gap-2 text-sm font-semibold text-ink-600 sm:grid-cols-2">
+                            <li v-for="point in (ar ? ['زيارات صيانة وقائية مجدولة', 'أولوية في الطوارئ', 'فنيون موثّقون لكل التخصصات', 'تقرير وفاتورة شهرية واحدة'] : ['Scheduled preventive visits', 'Priority for emergencies', 'Verified pros across trades', 'One monthly report and invoice'])" :key="point" class="flex items-center gap-2">
+                                <span class="grid h-4 w-4 shrink-0 place-items-center rounded-full bg-crimson/10 text-[10px] text-crimson" aria-hidden="true">✓</span>{{ point }}
+                            </li>
+                        </ul>
+                        <button type="button" class="btn-primary mt-7 !px-7 !py-4 text-base" @click="b2bOpen = true">
+                            {{ t('b2b.cta') }} <span aria-hidden="true" class="rtl:rotate-180">→</span>
+                        </button>
+                    </div>
+
+                    <ul class="grid grid-cols-2 gap-3" data-reveal-group>
+                        <li v-for="sector in b2bSectors" :key="sector.label">
+                            <button type="button" class="group flex w-full flex-col items-start gap-3 rounded-2xl border border-ink-200 bg-ivory p-5 text-start transition hover:-translate-y-1 hover:border-crimson/40 hover:shadow-lift" @click="b2bOpen = true">
+                                <span class="grid h-12 w-12 place-items-center rounded-2xl bg-ink text-2xl transition group-hover:bg-crimson" aria-hidden="true">{{ sector.icon }}</span>
+                                <span class="font-extrabold text-ink">{{ sector.label }}</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
             <!-- ============ FINAL CTA ============ -->
-            <section class="px-4 pb-16 sm:pb-24">
+            <section class="px-4 pb-16 pt-14 sm:pb-24 sm:pt-20">
                 <div class="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-crimson px-6 py-14 text-center text-white sm:py-20" data-reveal="scale">
                     <div class="pointer-events-none absolute inset-0 opacity-20 [background-image:radial-gradient(circle_at_1px_1px,#fff_1px,transparent_0)] [background-size:22px_22px]" aria-hidden="true" />
                     <div class="pointer-events-none absolute -bottom-24 start-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-ink/30 blur-3xl rtl:translate-x-1/2" aria-hidden="true" />
@@ -370,5 +409,6 @@ const schema = computed(() => JSON.stringify({
         </div>
 
         <BookingDrawer :open="drawer" :governorates="governorates" :preselect-service-slug="bookingSlug" @close="drawer = false" />
+        <B2bRequestModal :open="b2bOpen" @close="b2bOpen = false" />
     </PublicLayout>
 </template>

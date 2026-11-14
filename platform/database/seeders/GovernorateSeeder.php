@@ -36,10 +36,16 @@ class GovernorateSeeder extends Seeder
         ];
 
         foreach ($rows as [$code, $ar, $en, $lat, $lng, $mult]) {
-            Governorate::updateOrCreate(['code' => $code], [
+            // Created inactive: a governorate goes live only when it has an active
+            // district (DistrictSeeder) or an admin switches it on. `is_active` is
+            // never touched on re-seed, so launches made in the admin survive.
+            $governorate = Governorate::firstOrCreate(['code' => $code], [
+                'name_ar' => $ar, 'name_en' => $en, 'is_active' => false,
+            ]);
+            $governorate->update([
                 'name_ar' => $ar, 'name_en' => $en,
                 'center_lat' => $lat, 'center_lng' => $lng,
-                'dispatch_multiplier' => $mult, 'is_active' => true,
+                'dispatch_multiplier' => $mult,
             ]);
         }
     }

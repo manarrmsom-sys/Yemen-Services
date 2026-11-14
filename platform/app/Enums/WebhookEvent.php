@@ -14,6 +14,7 @@ enum WebhookEvent: string
     case KycRejected = 'kyc.rejected';
     case WalletTopupConfirmed = 'wallet.topup_confirmed';
     case CommissionSettled = 'commission.settled';
+    case B2bRequestCreated = 'b2b.request_created';
 
     /** @return string[] */
     public static function values(): array

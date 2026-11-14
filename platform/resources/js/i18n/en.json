@@ -137,6 +137,7 @@
         "rate": "Rate the service"
     },
     "admin": {
+        "b2b": "Business contracts (B2B)",
         "zones": "Cities & districts",
         "dashboard": "Dashboard",
         "orders": "Orders",
@@ -167,5 +168,7 @@
         "search": "Search",
         "all": "All",
         "close": "Close"
-    }
+    },
+    "b2b": {"title": "Maintenance contracts for businesses & facilities", "sub": "One maintenance team for your facility: scheduled visits, a fixed price and a single monthly invoice.", "cta": "Request a quote", "form_title": "Maintenance contract quote request", "business_name": "Business name", "business_type": "Business type", "city": "City", "district": "District", "district_other": "Another district (type the name)", "district_name": "District name", "facility_size": "Facility size / number of devices", "facility_hint": "e.g. 40 rooms, 25 AC units, 3 generators", "contact_name": "Contact person (optional)", "phone": "WhatsApp number", "notes": "More details (optional)", "submit": "Send request", "done_title": "We received your request", "done_sub": "Our team will contact you on WhatsApp to schedule a site visit and send the quote.", "reference": "Request number", "types": {"hotel": "Hotel", "restaurant": "Restaurant / café", "clinic": "Clinic / hospital", "residential_compound": "Residential compound", "office": "Offices / company", "retail": "Shop / mall", "school": "School / university", "other": "Other"}, "status": {"new": "New", "contacted": "Contacted", "quoted": "Quote sent", "won": "Won", "lost": "Lost"}},
+    "dispatch": {"kpi_acceptance": "Avg. time to accept", "kpi_fulfilment": "Fulfilment rate", "kpi_accuracy": "Estimate accuracy", "minutes": "min", "min_short": "m", "window": "Last {days} days", "no_data": "No data yet", "waiting": "Waiting for acceptance", "overdue": "Over {n} minutes — step in now", "on_time": "Within target", "remind": "Remind on WhatsApp", "reroute": "Re-route to another pro", "alternates_none": "No other ready pro in this district.", "alternates_no_district": "The order has no district, so no alternate can be suggested.", "open_whatsapp": "Open WhatsApp", "col_queued": "Queued", "col_sent": "Sent", "col_delivered": "Delivered", "col_accepted": "Accepted", "empty": "Nothing here", "attention": "Needs attention", "all_clear": "No overdue orders right now."}
 }

@@ -13,6 +13,10 @@ class DistrictSeeder extends Seeder
      * are listed as "coming soon" so demand can be collected on the waitlist.
      * Which districts are live is a business decision — change it any time in
      * Admin > Cities & districts. Statuses set there are not overwritten here.
+     *
+     * A governorate is switched on only the first time its districts are
+     * seeded, and only if one of them is active. Everything else stays off, so
+     * the real launch is exactly the active districts below.
      */
     public function run(): void
     {
@@ -47,11 +51,17 @@ class DistrictSeeder extends Seeder
                 continue;
             }
 
+            $firstSeed = ! $governorate->districts()->exists();
+
             foreach ($districts as $i => [$ar, $en, $status]) {
                 District::firstOrCreate(
                     ['governorate_id' => $governorate->id, 'name_ar' => $ar],
                     ['name_en' => $en, 'status' => $status, 'sort_order' => $i],
                 );
+            }
+
+            if ($firstSeed) {
+                $governorate->update(['is_active' => $governorate->districts()->where('status', District::ACTIVE)->exists()]);
             }
         }
     }
