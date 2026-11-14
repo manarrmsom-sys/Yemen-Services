@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Admin\AppearanceController;
 use App\Http\Controllers\Api\Admin\B2bAdminController;
+use App\Http\Controllers\Api\Admin\CatalogAdminController;
 use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\DispatchController as AdminDispatchController;
 use App\Http\Controllers\Api\Admin\KycReviewController;
@@ -121,6 +122,17 @@ Route::prefix('v1')->group(function () {
         Route::post('topups/{topup}/confirm', [WalletAdminController::class, 'confirmTopup']);
         Route::post('topups/{topup}/reject', [WalletAdminController::class, 'rejectTopup']);
         Route::get('commissions', [WalletAdminController::class, 'commissions']);
+
+        // Catalogue: staff read; only admins change categories, services and prices.
+        Route::get('catalog', [CatalogAdminController::class, 'index']);
+        Route::middleware('admin')->prefix('catalog')->group(function () {
+            Route::post('categories', [CatalogAdminController::class, 'storeCategory']);
+            Route::patch('categories/{category}', [CatalogAdminController::class, 'updateCategory']);
+            Route::delete('categories/{category}', [CatalogAdminController::class, 'destroyCategory']);
+            Route::post('services', [CatalogAdminController::class, 'storeService']);
+            Route::patch('services/{service}', [CatalogAdminController::class, 'updateService']);
+            Route::delete('services/{service}', [CatalogAdminController::class, 'destroyService']);
+        });
 
         // Tradespeople + readiness, launch zones, waitlist
         Route::get('tradespeople', [TradespersonAdminController::class, 'index']);

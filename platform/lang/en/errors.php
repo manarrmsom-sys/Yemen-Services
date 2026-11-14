@@ -20,4 +20,6 @@ return [
     'zone_district' => 'This district is not served yet. Join the waitlist.',
     'zone_already_served' => 'This zone is already served. You can book right away.',
     'zone_in_use' => 'A district with tradespeople or waitlist entries cannot be deleted. Set it to coming soon instead.',
+    'catalog_in_use' => 'Cannot delete: orders or tradespeople are linked to it. Deactivate it instead.',
+    'catalog_price_required' => 'Set a price above zero that matches the pricing model.',
 ];

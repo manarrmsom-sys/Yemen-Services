@@ -23,6 +23,7 @@ npm run dev            # + php artisan serve  → http://localhost:8000
 ```
 
 Full instructions: [`platform/README.md`](platform/README.md) and [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+Production `.env` values to fill in: [`docs/ENV_PRODUCTION.md`](docs/ENV_PRODUCTION.md).
 
 ## Highlights
 
