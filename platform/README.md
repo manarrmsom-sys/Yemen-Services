@@ -19,7 +19,36 @@ php artisan serve                 # terminal 2  → http://localhost:8000
 ```
 
 Admin sign-in: phone `+967700000001` (OTP — the code is written to `storage/logs/laravel.log`
-in local dev) or the password printed once by `AdminUserSeeder`.
+in local dev, with `LOG_LEVEL=debug`) or the password printed once by `AdminUserSeeder`.
+
+### Preview without MySQL or Redis (Windows)
+
+```powershell
+npm run build
+powershell -ExecutionPolicy Bypass -File scripts/preview.ps1
+```
+
+Runs on a throwaway SQLite database (`storage/app/preview.sqlite`, git-ignored) without
+touching `.env`. Delete that file to start from a fresh seed. Set `$env:PORT` to change
+the port (default 8000).
+
+| Page | URL |
+|---|---|
+| Home (booking, estimator, B2B quote) | `/` |
+| Vote for your city (waitlist) | `/waitlist`, `/waitlist?city=aden` |
+| Technician onboarding | `/join-technician` |
+| Sign in (email / WhatsApp OTP) | `/login` |
+| Admin, local only, no credentials | `/bypass-login` → `/admin` |
+| Operations room | `/admin/dispatch` |
+| Cities & districts, votes | `/admin/zones` |
+| Tradespeople + readiness | `/admin/pros` |
+| Business contracts (B2B) | `/admin/b2b` |
+| Storefront appearance | `/admin/appearance` |
+
+`/bypass-login` exists only when `APP_ENV=local`.
+
+A fresh seed is a narrow launch: only Amanat Al Asimah is live, in four districts.
+Switch cities and districts on in **Admin → Cities & districts**.
 
 ## What's inside
 

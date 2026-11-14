@@ -40,9 +40,15 @@ class ZoneController extends Controller
             'service_category_id' => ['nullable', 'integer', Rule::exists('service_categories', 'id')],
         ]);
 
-        // Already served: there is nothing to wait for, send them to booking.
-        if ($this->zones->rejection((int) $data['governorate_id'], $data['district_id'] ?? null) === null
-            && (($data['district_id'] ?? null) || blank($data['district_name'] ?? null))) {
+        // What can be voted for:
+        //   - a coming-soon city: as a whole, one of its districts, or a named district;
+        //   - a live city: only a district that is not live yet (listed or named).
+        // A live city as a whole, or a live district, is already served.
+        $districtId = $data['district_id'] ?? null;
+        $cityLive = (bool) \App\Models\Governorate::whereKey($data['governorate_id'])->value('is_active');
+        $districtLive = $districtId && District::whereKey($districtId)->active()->exists();
+
+        if ($cityLive && ($districtLive || (! $districtId && blank($data['district_name'] ?? null)))) {
             throw ValidationException::withMessages(['district_id' => [__('errors.zone_already_served')]]);
         }
 
