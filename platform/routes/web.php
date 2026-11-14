@@ -11,7 +11,9 @@ Route::get('/book/{service:slug?}', [PageController::class, 'book'])->name('book
 // Throttled: references are short, so lookups must not be enumerable.
 Route::get('/track/{reference?}', [PageController::class, 'track'])->middleware('throttle:track')->name('track');
 Route::get('/pros', [PageController::class, 'pros'])->name('pros');
-Route::get('/join', [PageController::class, 'join'])->name('join');       // tradesperson onboarding
+// Tradesperson onboarding. /join is the old address and keeps working.
+Route::get('/join-technician', [PageController::class, 'joinTechnician'])->name('join');
+Route::redirect('/join', '/join-technician', 301);
 Route::get('/offline', fn () => inertia('Offline'))->name('offline');
 Route::get('/login', [PageController::class, 'login'])->name('login');
 
@@ -32,6 +34,7 @@ Route::middleware(['auth', 'admin:dispatcher'])->prefix('admin')->name('admin.')
     Route::get('/categories', fn () => inertia('Admin/Categories'))->name('categories');
     Route::get('/services', fn () => inertia('Admin/Services'))->name('services');
     Route::get('/pros', fn () => inertia('Admin/Pros'))->name('pros');
+    Route::get('/zones', fn () => inertia('Admin/Zones'))->name('zones');
     Route::get('/appearance', fn () => inertia('Admin/Appearance'))->middleware('admin')->name('appearance');
     Route::get('/integrations', fn () => inertia('Admin/Integrations'))->middleware('admin')->name('integrations');
 });

@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             GovernorateSeeder::class,
+            DistrictSeeder::class,
             CatalogSeeder::class,
             AdminUserSeeder::class,
         ]);

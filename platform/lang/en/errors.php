@@ -15,4 +15,9 @@ return [
     'already_reviewed' => 'This order has already been reviewed.',
     'assign_unverified' => 'Cannot assign an unverified tradesperson.',
     'topup_not_pending' => 'This top-up is no longer pending.',
+    'zone_governorate' => 'We have not launched in this governorate yet. Join the waitlist.',
+    'zone_district_required' => 'Choose a district from the list.',
+    'zone_district' => 'This district is not served yet. Join the waitlist.',
+    'zone_already_served' => 'This zone is already served. You can book right away.',
+    'zone_in_use' => 'A district with tradespeople or waitlist entries cannot be deleted. Set it to coming soon instead.',
 ];

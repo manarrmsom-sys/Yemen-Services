@@ -55,6 +55,12 @@ return [
         'sender_id' => env('SMS_SENDER_ID', 'YemenSvc'),
     ],
 
+    'wallet' => [
+        // Prepaid float a tradesperson needs before they count as ready: it is
+        // what COD commission is settled from.
+        'min_float' => (int) env('WALLET_MIN_FLOAT_YER', 5000),
+    ],
+
     'n8n' => [
         'dispatch_url' => env('N8N_WEBHOOK_DISPATCH_URL'),
         'secret' => env('N8N_WEBHOOK_SECRET'),

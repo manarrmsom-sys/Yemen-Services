@@ -35,6 +35,19 @@
         "secure_platform": "منصة محمية"
     },
     "booking": {
+        "choose_district": "اختر الحي",
+        "district_missing": "حيّي ليس في القائمة",
+        "waitlist_title": "لم نصل إلى منطقتك بعد",
+        "waitlist_sub": "اترك رقمك ونخبرك فور بدء الخدمة في حيّك.",
+        "waitlist_city": "المدينة",
+        "waitlist_district": "الحي",
+        "waitlist_other": "حي آخر (اكتب الاسم)",
+        "waitlist_district_name": "اسم الحي",
+        "waitlist_submit": "أخبروني عند التوسع",
+        "waitlist_done": "تم تسجيل رقمك. سنتواصل معك عند بدء الخدمة في منطقتك.",
+        "waitlist_already": "رقمك مسجّل مسبقاً لهذه المنطقة.",
+        "waitlist_back": "العودة للحجز",
+        "coming_soon": "قريباً",
         "remote_note": "خدمة رقمية تُنفَّذ عن بُعد — لا حاجة لعنوان، ولا رسوم انتقال أو محافظة.",
         "title": "حجز خدمة",
         "step_service": "الخدمة",
@@ -124,6 +137,7 @@
         "rate": "قيّم الخدمة"
     },
     "admin": {
+        "zones": "المدن والأحياء",
         "dashboard": "لوحة القيادة",
         "orders": "الطلبات",
         "dispatch": "الإرسال والتوزيع",

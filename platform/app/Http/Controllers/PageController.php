@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\ServiceCategory;
 use App\Models\TradespersonProfile;
 use App\Services\Appearance\AppearanceService;
+use App\Services\Zones\ZoneService;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Request;
@@ -94,11 +95,25 @@ class PageController extends Controller
         return Inertia::render('Pros', ['governorates' => fn () => $this->governorates()]);
     }
 
-    public function join(): Response
+    public function joinTechnician(Request $request): Response
     {
-        return Inertia::render('Join', [
-            'categories' => ServiceCategory::active()->get(['id', 'name_ar', 'name_en', 'slug']),
+        $profile = $request->user()?->tradespersonProfile;
+
+        return Inertia::render('JoinTechnician', [
+            'categories' => ServiceCategory::active()->get(['id', 'name_ar', 'name_en', 'slug', 'is_remote']),
             'governorates' => fn () => $this->governorates(),
+            'terms' => [
+                'commission_percent' => config('platform.pricing.commission_percent'),
+                'min_float' => (int) config('platform.wallet.min_float'),
+                'currency' => config('platform.currency'),
+            ],
+            // Lets a returning applicant see where they stand instead of the form.
+            'application' => $profile ? [
+                'display_name' => $profile->display_name,
+                'kyc_status' => $profile->kyc_status->value,
+                'documents' => $profile->kycDocuments()->count(),
+                'readiness' => $profile->readiness(),
+            ] : null,
         ]);
     }
 
@@ -180,12 +195,7 @@ class PageController extends Controller
     {
         $locale = app()->getLocale();
 
-        return Cache::remember("governorates:{$locale}", 900, fn () => Governorate::where('is_active', true)->orderBy('name_'.$locale)->get()
-            ->map(fn ($g) => [
-                'id' => $g->id,
-                'code' => $g->code,
-                'name' => $g->localizedName($locale),
-                'dispatch_multiplier' => $g->dispatch_multiplier,
-            ]));
+        // Active governorates, each with its districts (active + coming soon).
+        return collect(app(ZoneService::class)->served($locale));
     }
 }

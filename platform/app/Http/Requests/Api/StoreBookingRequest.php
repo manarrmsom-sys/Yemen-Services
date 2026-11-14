@@ -25,6 +25,7 @@ class StoreBookingRequest extends FormRequest
             // Step 2 — where & when
             'governorate_id' => ['required', 'integer', 'exists:governorates,id'],
             'address_id' => ['nullable', 'integer', 'exists:addresses,id'],
+            'district_id' => ['nullable', 'integer', 'exists:districts,id'],
             'district' => ['nullable', 'string', 'max:120'],
             'directions' => ['nullable', 'string', 'max:500'],
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
@@ -39,6 +40,29 @@ class StoreBookingRequest extends FormRequest
             'notes' => ['nullable', 'string', 'max:1000'],
             'channel' => ['nullable', 'in:pwa,whatsapp,admin,phone'],
         ];
+    }
+
+    /**
+     * On-site work can only be booked where the platform has launched.
+     * Remote (digital) services are delivered online and skip the zone check.
+     */
+    public function after(): array
+    {
+        return [function (\Illuminate\Validation\Validator $validator): void {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+            if (\App\Models\Service::with('category:id,is_remote')->find($this->service_id)?->category?->is_remote) {
+                return;
+            }
+
+            $why = app(\App\Services\Zones\ZoneService::class)
+                ->rejection((int) $this->governorate_id, $this->district_id ? (int) $this->district_id : null);
+
+            if ($why) {
+                $validator->errors()->add($why === 'governorate' ? 'governorate_id' : 'district_id', __('errors.zone_'.$why));
+            }
+        }];
     }
 
     protected function prepareForValidation(): void

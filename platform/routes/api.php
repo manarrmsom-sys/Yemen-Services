@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Admin\DispatchController as AdminDispatchController;
 use App\Http\Controllers\Api\Admin\KycReviewController;
 use App\Http\Controllers\Api\Admin\OrderAdminController;
+use App\Http\Controllers\Api\Admin\TradespersonAdminController;
+use App\Http\Controllers\Api\Admin\ZoneAdminController;
 use App\Http\Controllers\Api\Admin\WalletAdminController;
 use App\Http\Controllers\Api\Admin\WebhookEndpointController;
 use App\Http\Controllers\Api\AuthController;
@@ -14,6 +16,7 @@ use App\Http\Controllers\Api\EstimateController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\TradespersonController;
+use App\Http\Controllers\Api\ZoneController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -25,6 +28,10 @@ Route::prefix('v1')->group(function () {
     Route::get('governorates', [CatalogController::class, 'governorates']);
     Route::get('tradespeople', [TradespersonController::class, 'index']);
     Route::get('tradespeople/{profile}', [TradespersonController::class, 'show']);
+
+    // ---- Launch zones + expansion waitlist ----
+    Route::get('zones', [ZoneController::class, 'index']);
+    Route::post('waitlist', [ZoneController::class, 'joinWaitlist'])->middleware('throttle:waitlist');
 
     Route::post('estimate', [EstimateController::class, 'store'])->middleware('throttle:booking');
 
@@ -103,6 +110,17 @@ Route::prefix('v1')->group(function () {
         Route::post('topups/{topup}/confirm', [WalletAdminController::class, 'confirmTopup']);
         Route::post('topups/{topup}/reject', [WalletAdminController::class, 'rejectTopup']);
         Route::get('commissions', [WalletAdminController::class, 'commissions']);
+
+        // Tradespeople + readiness, launch zones, waitlist
+        Route::get('tradespeople', [TradespersonAdminController::class, 'index']);
+        Route::get('zones', [ZoneAdminController::class, 'index']);
+        Route::get('zones/waitlist', [ZoneAdminController::class, 'waitlist']);
+        Route::middleware('admin')->group(function () {
+            Route::patch('zones/governorates/{governorate}', [ZoneAdminController::class, 'updateGovernorate']);
+            Route::post('zones/districts', [ZoneAdminController::class, 'storeDistrict']);
+            Route::patch('zones/districts/{district}', [ZoneAdminController::class, 'updateDistrict']);
+            Route::delete('zones/districts/{district}', [ZoneAdminController::class, 'destroyDistrict']);
+        });
 
         // Integration suite
         Route::middleware('admin')->group(function () {

@@ -28,11 +28,17 @@ class BookingController extends Controller
         $data = $request->validated();
         $user = $request->user();
 
+        // A chosen launch district is the source of truth for the district name.
+        if (! empty($data['district_id'])) {
+            $data['district'] = \App\Models\District::find($data['district_id'])?->name_ar ?? ($data['district'] ?? null);
+        }
+
         // Materialise an ad-hoc address when the guest supplied a district/pin.
         if (empty($data['address_id']) && ! empty($data['district'])) {
             $address = Address::create([
                 'user_id' => $user?->id,
                 'governorate_id' => $data['governorate_id'],
+                'district_id' => $data['district_id'] ?? null,
                 'district' => $data['district'],
                 'directions' => $data['directions'] ?? null,
                 'lat' => $data['lat'] ?? null,

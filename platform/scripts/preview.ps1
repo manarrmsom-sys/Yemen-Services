@@ -34,6 +34,7 @@ if (-not (Test-Path $db)) {
     & $php artisan migrate --force
     # Idempotent: picks up catalogue additions without wiping preview data.
     & $php artisan db:seed --class=Database\Seeders\CatalogSeeder --force
+    & $php artisan db:seed --class=Database\Seeders\DistrictSeeder --force
 }
 
 & $php artisan cache:clear | Out-Null

@@ -58,6 +58,7 @@ class TradespersonController extends Controller
             'display_name' => ['required', 'string', 'max:120'],
             'primary_category_id' => ['required', 'integer', 'exists:service_categories,id'],
             'base_governorate_id' => ['required', 'integer', 'exists:governorates,id'],
+            'base_district_id' => ['nullable', 'integer', Rule::exists('districts', 'id')->where('governorate_id', $request->input('base_governorate_id'))],
             'service_governorate_ids' => ['nullable', 'array'],
             'service_governorate_ids.*' => ['integer', 'exists:governorates,id'],
             'skills.*' => ['string', 'max:60'],

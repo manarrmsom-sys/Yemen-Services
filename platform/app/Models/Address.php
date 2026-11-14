@@ -11,7 +11,7 @@ class Address extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'governorate_id', 'label', 'district', 'street', 'building',
+        'user_id', 'governorate_id', 'district_id', 'label', 'district', 'street', 'building',
         'directions', 'lat', 'lng', 'contact_name', 'contact_phone', 'is_default',
     ];
 

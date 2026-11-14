@@ -6,6 +6,7 @@ import { watchDebounced } from '@vueuse/core';
 import { useApi } from '@/composables/useApi';
 import PriceBreakdown from '@/Components/PriceBreakdown.vue';
 import WhatsAppButton from '@/Components/WhatsAppButton.vue';
+import ZoneWaitlist from '@/Components/Booking/ZoneWaitlist.vue';
 
 const props = defineProps({
     open: { type: Boolean, default: false },
@@ -32,6 +33,7 @@ const form = reactive({
     quantity: 1,
     hours: 2,
     governorate_id: props.governorates[0]?.id ?? null,
+    district_id: null,
     district: '',
     directions: '',
     urgency: 'today',
@@ -49,6 +51,14 @@ const needsHours = computed(() => selectedService.value?.pricing_model === 'hour
 // Digital categories are delivered online: no district or directions needed.
 const isRemote = computed(() => selectedCategory.value?.is_remote === true);
 
+// Launch zones: a governorate that lists districts is only served in its
+// active ones. Anyone elsewhere is offered the expansion waitlist instead.
+const governorate = computed(() => props.governorates.find((g) => g.id === form.governorate_id));
+const activeDistricts = computed(() => (governorate.value?.districts || []).filter((d) => d.status === 'active'));
+const needsDistrict = computed(() => !isRemote.value && (governorate.value?.districts || []).length > 0);
+const waitlistOpen = ref(false);
+watch(() => form.governorate_id, () => { form.district_id = null; });
+
 // Preselect a service passed from the route.
 watch(
     () => props.open,
@@ -56,6 +66,7 @@ watch(
         if (!isOpen) return;
         step.value = 1;
         result.value = null;
+        waitlistOpen.value = false;
         if (props.preselectServiceSlug) {
             for (const c of catalog.value) {
                 const s = c.services.find((x) => x.slug === props.preselectServiceSlug);
@@ -94,7 +105,7 @@ watchDebounced(
 
 const canNext = computed(() => {
     if (step.value === 1) return !!form.service_id;
-    if (step.value === 2) return !!form.governorate_id && !!form.urgency;
+    if (step.value === 2) return !!form.governorate_id && !!form.urgency && (!needsDistrict.value || !!form.district_id);
     return true;
 });
 
@@ -114,7 +125,8 @@ async function submit() {
         governorate_id: Number(form.governorate_id),
         quantity: Number(form.quantity),
         hours: Number(form.hours),
-        district: form.district.trim(),
+        district_id: needsDistrict.value ? form.district_id : null,
+        district: needsDistrict.value ? '' : form.district.trim(),
         directions: form.directions.trim(),
         urgency: form.urgency,
         contact_name: form.contact_name.trim(),
@@ -137,6 +149,8 @@ async function submit() {
     } catch (e) {
         if (e.response?.status === 422) {
             Object.assign(errors, e.response.data.errors || {});
+            // A zone problem is fixed on the location step, so take them back there.
+            if (errors.district_id || errors.governorate_id) step.value = 2;
         } else {
             errors._ = e.response?.data?.message || t('common.error');
         }
@@ -167,7 +181,7 @@ function close() {
                     </div>
 
                     <!-- stepper -->
-                    <div v-if="!result" class="flex gap-2 px-5 pt-4">
+                    <div v-if="!result && !waitlistOpen" class="flex gap-2 px-5 pt-4">
                         <div
                             v-for="(labelKey, i) in ['booking.step_service', 'booking.step_where', 'booking.step_contact']"
                             :key="i"
@@ -177,8 +191,17 @@ function close() {
                     </div>
 
                     <div class="max-h-[70vh] overflow-y-auto px-5 py-4">
+                        <!-- WAITLIST — zone not served yet -->
+                        <ZoneWaitlist
+                            v-if="waitlistOpen"
+                            :governorate-id="form.governorate_id"
+                            :category-id="form.category_id"
+                            :phone="form.contact_phone"
+                            @back="waitlistOpen = false"
+                        />
+
                         <!-- SUCCESS -->
-                        <div v-if="result" class="space-y-4 text-center">
+                        <div v-else-if="result" class="space-y-4 text-center">
                             <div class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-100 text-2xl">✓</div>
                             <h3 class="text-lg font-extrabold">{{ t('booking.success_title') }}</h3>
                             <p class="text-sm text-obsidian-900/60">{{ t('booking.success_sub') }}</p>
@@ -232,7 +255,16 @@ function close() {
                             </div>
                             <p v-if="isRemote" class="rounded-xl bg-obsidian-100 px-3 py-2 text-xs font-semibold text-obsidian-900/70">{{ t('booking.remote_note') }}</p>
                             <template v-else>
-                                <div>
+                                <div v-if="needsDistrict">
+                                    <label class="block text-sm font-semibold" for="booking-district">{{ t('booking.choose_district') }}</label>
+                                    <select id="booking-district" v-model="form.district_id" class="field">
+                                        <option :value="null" disabled>—</option>
+                                        <option v-for="d in activeDistricts" :key="d.id" :value="d.id">{{ d.name }}</option>
+                                    </select>
+                                    <p v-if="errors.district_id" class="mt-1 text-xs text-crimson">{{ errors.district_id[0] }}</p>
+                                    <button type="button" class="mt-2 text-sm font-semibold text-crimson underline-offset-4 hover:underline" @click="waitlistOpen = true">{{ t('booking.district_missing') }}</button>
+                                </div>
+                                <div v-else>
                                     <label class="block text-sm font-semibold">{{ t('booking.district') }}</label>
                                     <input v-model="form.district" class="field" />
                                 </div>
@@ -296,13 +328,13 @@ function close() {
                         </div>
 
                         <!-- live estimate on steps 2 & 3 -->
-                        <div v-if="!result && step >= 2" class="mt-4">
+                        <div v-if="!result && !waitlistOpen && step >= 2" class="mt-4">
                             <PriceBreakdown :quote="quote" :loading="estimateLoading" />
                         </div>
                     </div>
 
                     <!-- footer -->
-                    <div v-if="!result" class="flex gap-2 border-t border-obsidian-100 px-5 py-4">
+                    <div v-if="!result && !waitlistOpen" class="flex gap-2 border-t border-obsidian-100 px-5 py-4">
                         <button v-if="step > 1" class="btn-ghost flex-1" @click="back">{{ t('booking.back') }}</button>
                         <button v-if="step < 3" class="btn-primary flex-[2]" :disabled="!canNext" @click="next">{{ t('booking.next') }}</button>
                         <button v-else class="btn-primary flex-[2]" :disabled="submitting" @click="submit">

@@ -62,7 +62,11 @@ class OtpLoginController extends Controller
         Auth::login($user, remember: true);
         $request->session()->regenerate();
 
-        $fallback = $user->isStaff() ? route('admin.categories') : ($data['redirect'] ?? route('account'));
+        // `redirect` comes from the query string: accept only a path on this site,
+        // never an absolute or protocol-relative URL (open redirect).
+        $target = (string) ($data['redirect'] ?? '');
+        $safe = preg_match('#^/(?![/\\\\])[^\s]*$#', $target) === 1 ? $target : route('account');
+        $fallback = $user->isStaff() ? route('admin.home') : $safe;
 
         return redirect()->intended($fallback);
     }

@@ -53,6 +53,14 @@ class AppServiceProvider extends ServiceProvider
             ]);
         });
 
+        // Public, unauthenticated write: tight per IP, tighter per phone number.
+        RateLimiter::for('waitlist', fn ($request) => array_filter([
+            Limit::perMinute(5)->by('ip:'.$request->ip()),
+            $request->input('phone')
+                ? Limit::perHour(5)->by('phone:'.sha1(preg_replace('/\D/', '', (string) $request->input('phone'))))
+                : null,
+        ]));
+
         RateLimiter::for('track', fn ($request) => Limit::perMinute(30)->by($request->ip()));
 
         RateLimiter::for('home', fn ($request) => Limit::perMinute($limits['home'])->by($request->ip()));

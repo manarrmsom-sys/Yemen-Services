@@ -111,7 +111,7 @@ class SecurityTest extends TestCase
             $this->assertStringNotContainsString('967711000111', $body, "$url leaked a phone");
         }
 
-        foreach (['/', '/pros', '/join', '/login'] as $url) {
+        foreach (['/', '/pros', '/join-technician', '/login'] as $url) {
             $body = $this->get($url)->assertOk()->getContent();
             $this->assertStringNotContainsString('@example.test', $body, "$url leaked an email");
             $this->assertStringNotContainsString('967711000111', $body, "$url leaked a phone");

@@ -25,6 +25,11 @@ class Governorate extends Model
         ];
     }
 
+    public function districts(): HasMany
+    {
+        return $this->hasMany(District::class)->orderBy('sort_order')->orderBy('name_ar');
+    }
+
     public function addresses(): HasMany
     {
         return $this->hasMany(Address::class);

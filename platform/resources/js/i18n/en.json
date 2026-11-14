@@ -35,6 +35,19 @@
         "secure_platform": "Protected platform"
     },
     "booking": {
+        "choose_district": "Choose a district",
+        "district_missing": "My district is not listed",
+        "waitlist_title": "We are not in your area yet",
+        "waitlist_sub": "Leave your number and we will tell you when we launch there.",
+        "waitlist_city": "City",
+        "waitlist_district": "District",
+        "waitlist_other": "Another district (type the name)",
+        "waitlist_district_name": "District name",
+        "waitlist_submit": "Notify me when you expand",
+        "waitlist_done": "You are on the list. We will contact you when we launch in your area.",
+        "waitlist_already": "Your number is already on the list for this area.",
+        "waitlist_back": "Back to booking",
+        "coming_soon": "Soon",
         "remote_note": "Digital service delivered online. No address needed, no call-out or governorate fee.",
         "title": "Book a service",
         "step_service": "Service",
@@ -124,6 +137,7 @@
         "rate": "Rate the service"
     },
     "admin": {
+        "zones": "Cities & districts",
         "dashboard": "Dashboard",
         "orders": "Orders",
         "dispatch": "Dispatch",
