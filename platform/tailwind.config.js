@@ -56,6 +56,20 @@ export default {
                     900: '#111315',
                     950: '#0A0B0C',
                 },
+                // Stock palette names used by older pages, re-pointed at the brand:
+                // neutral greys and blues become charcoal, red becomes Yemeni crimson.
+                slate: {
+                    50: '#F8F9FA', 100: '#F1F3F5', 200: '#E3E6E9', 300: '#C9CED3', 400: '#9AA1A8',
+                    500: '#6B7279', 600: '#4A5056', 700: '#2E3236', 800: '#1E2022', 900: '#111315', 950: '#0A0B0C',
+                },
+                blue: {
+                    50: '#F1F3F5', 100: '#E3E6E9', 200: '#C9CED3', 300: '#9AA1A8', 400: '#6B7279',
+                    500: '#4A5056', 600: '#1E2022', 700: '#111315', 800: '#111315', 900: '#0A0B0C',
+                },
+                red: {
+                    50: '#FDF2F3', 100: '#FCE4E7', 200: '#F8BFC6', 300: '#F195A2', 400: '#E24C60',
+                    500: '#CE1126', 600: '#CE1126', 700: '#A80D1E', 800: '#8C0B19', 900: '#52070F',
+                },
                 ivory: '#F8F9FA',
                 offwhite: '#F8F9FA',
                 // Used sparingly: KYC-verified badges and ratings only.

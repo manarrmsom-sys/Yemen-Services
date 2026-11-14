@@ -29,6 +29,11 @@ class ZoneAdminController extends Controller
             ->groupBy('base_governorate_id')->get()->keyBy('base_governorate_id');
         $waitlistByGovernorate = ZoneWaitlist::selectRaw('governorate_id, COUNT(*) as n')->groupBy('governorate_id')->pluck('n', 'governorate_id');
 
+        // Districts people asked for that are not in the list yet.
+        $unlisted = ZoneWaitlist::whereNull('district_id')->whereNotNull('district_name')
+            ->selectRaw('governorate_id, district_name, COUNT(*) as n')
+            ->groupBy('governorate_id', 'district_name')->orderByDesc('n')->get()->groupBy('governorate_id');
+
         $governorates = Governorate::query()
             ->with(['districts' => fn ($q) => $q->withCount([
                 'tradespeople as verified_pros' => $verified,
@@ -44,6 +49,8 @@ class ZoneAdminController extends Controller
                 'verified_pros' => (int) ($prosByGovernorate[$g->id]->verified ?? 0),
                 'active_pros' => (int) ($prosByGovernorate[$g->id]->active ?? 0),
                 'waitlist_count' => (int) ($waitlistByGovernorate[$g->id] ?? 0),
+                'unlisted' => ($unlisted[$g->id] ?? collect())->take(8)
+                    ->map(fn ($row) => ['name' => $row->district_name, 'count' => (int) $row->n])->values(),
                 'districts' => $g->districts->map(fn (District $d) => [
                     'id' => $d->id,
                     'name_ar' => $d->name_ar,

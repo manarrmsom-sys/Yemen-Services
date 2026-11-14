@@ -45,6 +45,8 @@ class PageController extends Controller
             return [
                 ['loc' => $base.'/', 'lastmod' => now()->toAtomString(), 'priority' => '1.0'],
                 ['loc' => $base.'/pros', 'lastmod' => now()->toAtomString(), 'priority' => '0.8'],
+                ['loc' => $base.'/waitlist', 'lastmod' => now()->toAtomString(), 'priority' => '0.6'],
+                ['loc' => $base.'/join-technician', 'lastmod' => now()->toAtomString(), 'priority' => '0.6'],
                 ...$categories->map(fn ($category) => [
                     'loc' => $base.'/services/'.$category->slug,
                     'lastmod' => $category->updated_at?->toAtomString(),
@@ -93,6 +95,21 @@ class PageController extends Controller
     public function pros(): Response
     {
         return Inertia::render('Pros', ['governorates' => fn () => $this->governorates()]);
+    }
+
+    /**
+     * Public "vote for your city" page — the landing page for the expansion
+     * campaign. `?city=aden` preselects a governorate by code.
+     */
+    public function waitlist(Request $request, ZoneService $zones): Response
+    {
+        $code = preg_replace('/[^a-z_]/', '', strtolower((string) $request->query('city')));
+
+        return Inertia::render('Waitlist', [
+            'zones' => fn () => $zones->withVotes(app()->getLocale()),
+            'city' => $code ?: null,
+            'categories' => fn () => ServiceCategory::active()->get(['id', 'name_ar', 'name_en']),
+        ]);
     }
 
     public function joinTechnician(Request $request): Response

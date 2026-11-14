@@ -69,7 +69,7 @@ onMounted(load);
                         <p class="font-bold text-obsidian-900">{{ p.display_name }}</p>
                         <p class="text-xs text-slate-500">{{ p.user?.phone }} · {{ p.kyc_documents_count }} مستندات</p>
                     </div>
-                    <span class="px-2 py-1 text-xs font-semibold rounded bg-amber-50 text-amber-700 border border-amber-200">
+                    <span class="px-2 py-1 text-xs font-semibold rounded bg-crimson-50 text-crimson-700 border border-crimson-200">
                         {{ p.kyc_status }}
                     </span>
                 </button>

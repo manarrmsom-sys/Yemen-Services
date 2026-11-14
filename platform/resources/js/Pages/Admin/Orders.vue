@@ -105,13 +105,13 @@ onMounted(load);
                     <p class="text-xs font-bold text-slate-600 mb-2">إجراءات التحكم بالطلب:</p>
                     <div class="flex flex-wrap gap-2">
                         <button class="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700" @click="dispatch(selected.reference)">إعادة توجيه (Re-dispatch)</button>
-                        <button class="px-3 py-1.5 text-xs bg-amber-600 text-white rounded hover:bg-amber-700" @click="transition(selected.reference, 'in_progress')">تعيين كقيد التنفيذ</button>
+                        <button class="px-3 py-1.5 text-xs bg-crimson-700 text-white rounded hover:bg-crimson-700" @click="transition(selected.reference, 'in_progress')">تعيين كقيد التنفيذ</button>
                         <button class="px-3 py-1.5 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700" @click="transition(selected.reference, 'completed')">إكمال الطلب</button>
                         <button class="px-3 py-1.5 text-xs bg-red-600 text-white rounded hover:bg-red-700" @click="transition(selected.reference, 'cancelled')">إلغاء الطلب</button>
                     </div>
                 </div>
 
-                <a v-if="selected.dispatch_jobs?.length" :href="selected.dispatch_jobs.at(-1).wa_deeplink" target="_blank" class="mt-4 block w-full text-center py-2 text-xs bg-green-600 text-white font-bold rounded hover:bg-green-700">
+                <a v-if="selected.dispatch_jobs?.length" :href="selected.dispatch_jobs.at(-1).wa_deeplink" target="_blank" class="mt-4 block w-full text-center py-2 text-xs bg-emerald-600 text-white font-bold rounded hover:bg-emerald-700">
                     فتح رابط التوزيع عبر WhatsApp
                 </a>
 

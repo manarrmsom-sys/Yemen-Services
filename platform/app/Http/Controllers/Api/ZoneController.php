@@ -15,10 +15,13 @@ class ZoneController extends Controller
 {
     public function __construct(private readonly ZoneService $zones) {}
 
-    /** Full zone tree (served + coming soon) for the waitlist form. */
+    /**
+     * Full zone tree (served + coming soon) for the waitlist form, with the
+     * public vote count of every zone. Counts only — never who voted.
+     */
     public function index(): JsonResponse
     {
-        return response()->json(['data' => $this->zones->all(app()->getLocale())]);
+        return response()->json(['data' => $this->zones->withVotes(app()->getLocale())]);
     }
 
     /**
@@ -58,6 +61,12 @@ class ZoneController extends Controller
                 'service_category_id' => $data['service_category_id'] ?? null,
             ],
         );
+
+        if ($entry->wasRecentlyCreated) {
+            foreach (config('app.supported_locales', ['ar', 'en']) as $locale) {
+                \Illuminate\Support\Facades\Cache::forget("zones:votes:{$locale}");
+            }
+        }
 
         return response()->json([
             'data' => [

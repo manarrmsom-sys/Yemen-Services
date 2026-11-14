@@ -206,7 +206,7 @@ function close() {
                             <h3 class="text-lg font-extrabold">{{ t('booking.success_title') }}</h3>
                             <p class="text-sm text-obsidian-900/60">{{ t('booking.success_sub') }}</p>
                             <p class="chip mx-auto bg-obsidian-100">{{ t('order.reference') }}: {{ result.order.reference }}</p>
-                            <p v-if="result.dispatch?.error" class="border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-6 text-amber-800">{{ result.dispatch.error }}</p>
+                            <p v-if="result.dispatch?.error" class="border border-crimson-200 bg-crimson-50 px-3 py-2 text-xs leading-6 text-crimson-700">{{ result.dispatch.error }}</p>
                             <PriceBreakdown :quote="result.price_breakdown" />
                             <WhatsAppButton v-if="result.dispatch?.wa_deeplink" :href="result.dispatch.wa_deeplink" />
                             <a :href="`/track/${result.order.reference}`" class="btn-ghost w-full">{{ t('order.track_title') }}</a>
@@ -253,6 +253,7 @@ function close() {
                                     <option v-for="g in governorates" :key="g.id" :value="g.id">{{ g.name }}</option>
                                 </select>
                             </div>
+                            <button v-if="!isRemote" type="button" class="text-sm font-semibold text-crimson underline-offset-4 hover:underline" @click="waitlistOpen = true">{{ t('booking.zone_missing') }}</button>
                             <p v-if="isRemote" class="rounded-xl bg-obsidian-100 px-3 py-2 text-xs font-semibold text-obsidian-900/70">{{ t('booking.remote_note') }}</p>
                             <template v-else>
                                 <div v-if="needsDistrict">
@@ -262,7 +263,6 @@ function close() {
                                         <option v-for="d in activeDistricts" :key="d.id" :value="d.id">{{ d.name }}</option>
                                     </select>
                                     <p v-if="errors.district_id" class="mt-1 text-xs text-crimson">{{ errors.district_id[0] }}</p>
-                                    <button type="button" class="mt-2 text-sm font-semibold text-crimson underline-offset-4 hover:underline" @click="waitlistOpen = true">{{ t('booking.district_missing') }}</button>
                                 </div>
                                 <div v-else>
                                     <label class="block text-sm font-semibold">{{ t('booking.district') }}</label>

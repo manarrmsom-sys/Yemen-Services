@@ -11,6 +11,9 @@ Route::get('/book/{service:slug?}', [PageController::class, 'book'])->name('book
 // Throttled: references are short, so lookups must not be enumerable.
 Route::get('/track/{reference?}', [PageController::class, 'track'])->middleware('throttle:track')->name('track');
 Route::get('/pros', [PageController::class, 'pros'])->name('pros');
+// Expansion campaign: vote for a city or district that is not served yet.
+Route::get('/waitlist', [PageController::class, 'waitlist'])->middleware('throttle:home')->name('waitlist');
+
 // Tradesperson onboarding. /join is the old address and keeps working.
 Route::get('/join-technician', [PageController::class, 'joinTechnician'])->name('join');
 Route::redirect('/join', '/join-technician', 301);

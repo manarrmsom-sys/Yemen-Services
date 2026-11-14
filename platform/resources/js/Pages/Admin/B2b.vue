@@ -45,7 +45,7 @@ async function save(lead, patch) {
     }
 }
 
-const tone = { new: 'bg-crimson text-white', contacted: 'bg-ink-100 text-ink-600', quoted: 'bg-gold-50 text-gold-700', won: 'bg-emerald-50 text-emerald-700', lost: 'bg-ink-100 text-ink-400' };
+const tone = { new: 'bg-crimson text-white', contacted: 'bg-ink-100 text-ink-600', quoted: 'bg-ink text-white', won: 'bg-emerald-50 text-emerald-700', lost: 'bg-ink-100 text-ink-400' };
 const date = (iso) => new Date(iso).toLocaleString(locale.value === 'ar' ? 'ar-YE' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' });
 </script>
 

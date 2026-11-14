@@ -35,11 +35,32 @@ class ZoneService
         ));
     }
 
+    /**
+     * The full tree plus how many people asked for each zone. A governorate's
+     * count includes its districts and people who named no district.
+     * Cached briefly: it is hit by a public campaign page.
+     */
+    public function withVotes(string $locale): array
+    {
+        return Cache::remember("zones:votes:{$locale}", 60, function () use ($locale): array {
+            $byGovernorate = \App\Models\ZoneWaitlist::selectRaw('governorate_id, COUNT(*) as n')->groupBy('governorate_id')->pluck('n', 'governorate_id');
+            $byDistrict = \App\Models\ZoneWaitlist::whereNotNull('district_id')->selectRaw('district_id, COUNT(*) as n')->groupBy('district_id')->pluck('n', 'district_id');
+
+            return array_map(function (array $g) use ($byGovernorate, $byDistrict) {
+                $g['votes'] = (int) ($byGovernorate[$g['id']] ?? 0);
+                $g['districts'] = array_map(fn (array $d) => $d + ['votes' => (int) ($byDistrict[$d['id']] ?? 0)], $g['districts']);
+
+                return $g;
+            }, $this->all($locale));
+        });
+    }
+
     public function flush(): void
     {
         foreach (config('app.supported_locales', ['ar', 'en']) as $locale) {
             Cache::forget("zones:served:{$locale}");
             Cache::forget("zones:all:{$locale}");
+            Cache::forget("zones:votes:{$locale}");
             Cache::forget("governorates:{$locale}");
         }
     }

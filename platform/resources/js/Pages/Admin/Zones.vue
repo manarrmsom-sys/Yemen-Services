@@ -21,10 +21,27 @@ const loading = ref(true);
 const error = ref('');
 const open = ref(null);
 const onlyActive = ref(false);
+const sort = ref('demand'); // demand | name
+
 const draft = reactive({ name_ar: '', name_en: '', status: 'coming_soon' });
 const waitlist = ref(null); // { title, rows }
 
-const visible = computed(() => governorates.value.filter((g) => !onlyActive.value || g.is_active));
+// "Most requested" puts the cities and districts people voted for at the top.
+const visible = computed(() => governorates.value
+    .filter((g) => !onlyActive.value || g.is_active)
+    .map((g) => ({
+        ...g,
+        // Votes for the city as a whole or for districts typed by name.
+        unassigned_votes: g.waitlist_count - g.districts.reduce((n, d) => n + d.waitlist_count, 0),
+        districts: sort.value === 'demand' ? [...g.districts].sort((a, b) => b.waitlist_count - a.waitlist_count || a.sort_order - b.sort_order) : g.districts,
+    }))
+    .sort((a, b) => (sort.value === 'demand' ? b.waitlist_count - a.waitlist_count || Number(b.is_active) - Number(a.is_active) : 0)));
+
+// Leaderboard across everything that is not live yet.
+const demand = computed(() => governorates.value.flatMap((g) => [
+    ...(g.is_active ? [] : [{ key: `g${g.id}`, label: name(g), votes: g.waitlist_count, city: true }]),
+    ...g.districts.filter((d) => d.status !== 'active').map((d) => ({ key: `d${d.id}`, label: `${name(g)} — ${name(d)}`, votes: d.waitlist_count })),
+]).filter((z) => z.votes > 0).sort((a, b) => b.votes - a.votes).slice(0, 6));
 const totals = computed(() => ({
     cities: governorates.value.filter((g) => g.is_active).length,
     districts: governorates.value.flatMap((g) => g.districts).filter((d) => d.status === 'active').length,
@@ -83,9 +100,31 @@ const supplyClass = (d) => (d.status === 'active' && d.active_pros === 0 ? 'bg-c
                 <div class="card p-4"><p class="text-2xl font-black text-ink">{{ totals.waitlist }}</p><p class="text-xs text-ink-500">{{ L('في قائمة الانتظار', 'on the waitlist') }}</p></div>
             </div>
 
+            <!-- most requested zones -->
+            <section class="card p-4">
+                <h2 class="text-sm font-extrabold text-ink">🗳 {{ L('الأكثر تصويتاً لافتتاحه', 'Most voted to open') }}</h2>
+                <ol v-if="demand.length" class="mt-3 grid gap-2 sm:grid-cols-2">
+                    <li v-for="(zone, i) in demand" :key="zone.key" class="flex items-center gap-3 rounded-xl bg-ink-50 px-3 py-2 text-sm">
+                        <span class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-ink text-xs font-black text-white">{{ i + 1 }}</span>
+                        <span class="min-w-0 flex-1 truncate font-semibold text-ink">{{ zone.label }}<span v-if="zone.city" class="ms-1 text-xs font-normal text-ink-500">({{ L('مدينة', 'city') }})</span></span>
+                        <span class="chip shrink-0 bg-crimson-50 tabular-nums text-crimson-700">{{ zone.votes }} {{ L('صوت', 'votes') }}</span>
+                    </li>
+                </ol>
+                <p v-else class="mt-2 text-sm text-ink-500">{{ L('لا أصوات بعد. شارك رابط /waitlist في حملتك.', 'No votes yet. Share the /waitlist link in your campaign.') }}</p>
+            </section>
+
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <p class="text-sm text-ink-500">{{ L('المدينة التي لا تحتوي أحياء تُخدَم كاملة. أضف أحياء لتقييد الخدمة بالمفعّل منها فقط.', 'A city with no districts is served as a whole. Add districts to restrict service to the active ones.') }}</p>
-                <label class="inline-flex items-center gap-2 text-sm font-semibold"><input v-model="onlyActive" type="checkbox" class="h-4 w-4 rounded border-ink-300 text-crimson focus:ring-crimson" />{{ L('المفعّلة فقط', 'Live only') }}</label>
+                <div class="flex items-center gap-3">
+                    <label class="inline-flex items-center gap-2 text-sm font-semibold">
+                        {{ L('الترتيب', 'Sort') }}
+                        <select v-model="sort" class="rounded-lg border-ink-200 py-1.5 pe-8 ps-2 text-xs font-bold">
+                            <option value="demand">{{ L('الأكثر طلباً', 'Most requested') }}</option>
+                            <option value="name">{{ L('المفعّلة ثم أبجدياً', 'Live first, then A–Z') }}</option>
+                        </select>
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-sm font-semibold"><input v-model="onlyActive" type="checkbox" class="h-4 w-4 rounded border-ink-300 text-crimson focus:ring-crimson" />{{ L('المفعّلة فقط', 'Live only') }}</label>
+                </div>
             </div>
 
             <p v-if="error" class="rounded-xl border border-crimson-200 bg-crimson-50 p-3 text-sm font-semibold text-crimson-700" role="alert">{{ error }}</p>
@@ -99,12 +138,18 @@ const supplyClass = (d) => (d.status === 'active' && d.active_pros === 0 ? 'bg-c
                         <span class="chip" :class="g.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-ink-100 text-ink-500'">{{ g.is_active ? L('مفعّلة', 'Live') : t('booking.coming_soon') }}</span>
                     </button>
                     <span class="chip bg-ink-100 text-ink-600" :title="L('موثّقون / نشطون', 'verified / active')">👷 {{ g.verified_pros }} / {{ g.active_pros }}</span>
-                    <button v-if="g.waitlist_count" type="button" class="chip bg-gold-50 text-gold-700" @click="showWaitlist(g)">⏳ {{ g.waitlist_count }}</button>
+                    <button type="button" class="chip tabular-nums" :class="g.waitlist_count ? 'bg-crimson-50 text-crimson-700' : 'bg-ink-100 text-ink-400'" :disabled="!g.waitlist_count" :title="L('عدد المنتظرين', 'People waiting')" @click="showWaitlist(g)">🗳 {{ g.waitlist_count }} {{ L('صوت', 'votes') }}</button>
                     <span class="text-xs text-ink-500">{{ g.districts.length }} {{ L('حي', 'districts') }}</span>
                     <button type="button" class="btn-ghost !px-3 !py-1.5 text-xs" @click="toggleCity(g)">{{ g.is_active ? L('إيقاف', 'Pause') : L('تفعيل', 'Go live') }}</button>
                 </header>
 
                 <div v-if="open === g.id" class="border-t border-ink-200 bg-ink-50 p-4">
+                    <div v-if="g.unassigned_votes > 0" class="mb-3 rounded-xl bg-white p-3 text-sm ring-1 ring-ink-200">
+                        <p class="font-semibold text-ink">{{ g.unassigned_votes }} {{ L('صوت للمدينة كلها أو لأحياء غير مدرجة', 'votes for the whole city or unlisted districts') }}</p>
+                        <ul v-if="g.unlisted.length" class="mt-2 flex flex-wrap gap-1.5">
+                            <li v-for="row in g.unlisted" :key="row.name" class="chip bg-ink-100 text-ink-600">{{ row.name }} <span class="tabular-nums text-crimson-700">{{ row.count }}</span></li>
+                        </ul>
+                    </div>
                     <div v-if="g.districts.length" class="overflow-x-auto rounded-xl bg-white ring-1 ring-ink-200">
                         <table class="w-full text-sm">
                             <thead class="text-xs text-ink-500">
@@ -129,7 +174,7 @@ const supplyClass = (d) => (d.status === 'active' && d.active_pros === 0 ? 'bg-c
                                     <td class="p-3 tabular-nums">{{ d.verified_pros }}</td>
                                     <td class="p-3"><span class="chip tabular-nums" :class="supplyClass(d)">{{ d.active_pros }}</span></td>
                                     <td class="p-3">
-                                        <button v-if="d.waitlist_count" type="button" class="chip bg-gold-50 tabular-nums text-gold-700" @click="showWaitlist(g, d)">{{ d.waitlist_count }}</button>
+                                        <button v-if="d.waitlist_count" type="button" class="chip bg-crimson-50 tabular-nums text-crimson-700" @click="showWaitlist(g, d)">{{ d.waitlist_count }}</button>
                                         <span v-else class="text-ink-400">0</span>
                                     </td>
                                     <td class="p-3 text-end"><button type="button" class="chip bg-crimson-50 text-crimson-700" :aria-label="L('حذف', 'Delete')" @click="remove(d)">✕</button></td>

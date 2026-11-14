@@ -210,6 +210,20 @@ const schema = computed(() => JSON.stringify({
                 </div>
             </section>
 
+            <!-- ============ VOTE FOR YOUR CITY ============ -->
+            <section class="mx-auto max-w-6xl px-4 pt-10">
+                <Link :href="route('waitlist')" class="group flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-ink-200 bg-white px-5 py-4 transition hover:border-crimson/40 hover:shadow-lift" data-reveal>
+                    <span class="flex items-center gap-3">
+                        <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-crimson/10 text-xl" aria-hidden="true">📍</span>
+                        <span>
+                            <span class="block font-extrabold text-ink">{{ t('booking.vote_cta') }}</span>
+                            <span class="block text-sm text-ink-500">{{ t('booking.vote_cta_sub') }}</span>
+                        </span>
+                    </span>
+                    <span class="btn-primary !px-5 !py-2.5">{{ t('booking.vote_submit') }} <span aria-hidden="true" class="rtl:rotate-180">→</span></span>
+                </Link>
+            </section>
+
             <!-- ============ PROMO BANNERS (Admin → Appearance) ============ -->
             <section v-if="banners.length" class="mx-auto max-w-6xl px-4 pt-12 sm:pt-16">
                 <div class="grid gap-4" :class="banners.length > 1 ? 'md:grid-cols-2' : ''" data-reveal-group>

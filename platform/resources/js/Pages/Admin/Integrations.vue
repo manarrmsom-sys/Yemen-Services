@@ -46,7 +46,7 @@ onMounted(load);
                     <option v-for="e in events" :key="e" :value="e">{{ e }}</option>
                 </select>
                 <button class="btn-primary mt-3 w-full" @click="create">Create</button>
-                <p v-if="secretShown" class="mt-2 break-all rounded-lg bg-amber-50 p-2 text-xs text-amber-800">
+                <p v-if="secretShown" class="mt-2 break-all rounded-lg bg-crimson-50 p-2 text-xs text-crimson-700">
                     Signing secret (shown once): <strong>{{ secretShown }}</strong>
                 </p>
             </div>

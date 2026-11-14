@@ -83,7 +83,7 @@ const tabs = computed(() => [
                 </div>
                 <div>
                     <p class="font-bold text-white">{{ t('footer.legal_title') }}</p>
-                    <div class="mt-3 space-y-2"><a href="#" class="block transition hover:text-white">{{ t('footer.terms') }}</a><a href="#" class="block transition hover:text-white">{{ t('footer.privacy') }}</a><a href="#" class="block transition hover:text-white">{{ t('footer.customer_rights') }}</a></div>
+                    <div class="mt-3 space-y-2"><Link :href="route('waitlist')" class="block transition hover:text-white">{{ t('booking.vote_cta') }}</Link><a href="#" class="block transition hover:text-white">{{ t('footer.terms') }}</a><a href="#" class="block transition hover:text-white">{{ t('footer.privacy') }}</a><a href="#" class="block transition hover:text-white">{{ t('footer.customer_rights') }}</a></div>
                 </div>
                 <div>
                     <p class="font-bold text-white">{{ t('footer.contact_title') }}</p>
