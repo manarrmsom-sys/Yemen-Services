@@ -35,7 +35,7 @@ jobs:
           ref: ${{ github.event.inputs.ref || 'main' }}
 
       # Build assets in CI so the VPS never needs Node / a big toolchain.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
