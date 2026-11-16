@@ -88,7 +88,7 @@ class OtpService
         OtpCode::where($identityColumn, $recipient)->where('purpose', $purpose)->whereNull('consumed_at')
             ->update(['consumed_at' => now()]);
 
-        OtpCode::create([
+        $otp = OtpCode::create([
             'phone' => $channel === OtpChannel::Email ? null : $recipient,
             'email' => $channel === OtpChannel::Email ? $recipient : null,
             'code_hash' => Hash::make($code),
@@ -99,16 +99,33 @@ class OtpService
             'expires_at' => $expiresAt,
         ]);
 
-        $this->channels->for($channel)->send(
-            $recipient,
-            __('auth.otp_message', ['code' => $code, 'app' => config('app.name'), 'minutes' => (int) ($cfg['ttl_seconds'] / 60)]),
-            [
-                'template' => $channel === OtpChannel::WhatsApp ? config('platform.whatsapp.otp_template') : null,
-                'params' => [$code],
-                'language' => app()->getLocale(),
-                'subject' => __('auth.otp_subject'),
-            ],
-        );
+        try {
+            $this->channels->for($channel)->send(
+                $recipient,
+                __('auth.otp_message', ['code' => $code, 'app' => config('app.name'), 'minutes' => (int) ($cfg['ttl_seconds'] / 60)]),
+                [
+                    'template' => $channel === OtpChannel::WhatsApp ? config('platform.whatsapp.otp_template') : null,
+                    'params' => [$code],
+                    'language' => app()->getLocale(),
+                    'subject' => __('auth.otp_subject'),
+                ],
+            );
+        } catch (\Throwable $e) {
+            // A blocked SMTP port or a rejected API key is an operational issue:
+            // report it as a field error (the visitor can retry) and never as a
+            // bare 500. The code is consumed so an undeliverable one cannot stay
+            // active and trigger the resend cooldown.
+            $otp->update(['consumed_at' => now()]);
+            Log::error('[otp] delivery failed', [
+                'channel' => $channel->value,
+                'exception' => $e::class,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw ValidationException::withMessages([
+                $identityColumn => [__('auth.otp_delivery_failed')],
+            ]);
+        }
 
         return [
             'session_token' => $sessionToken,

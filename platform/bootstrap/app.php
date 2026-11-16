@@ -59,6 +59,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // A throttled Inertia visit (e.g. repeated OTP requests) gets the page back
+        // with a readable message instead of the raw 429 error screen.
+        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e, Request $request) {
+            if ($request->header('X-Inertia') && ! $request->expectsJson()) {
+                return back()->with('error', __('auth.otp_throttled', [
+                    'seconds' => (int) ($e->getHeaders()['Retry-After'] ?? 60),
+                ]));
+            }
+        });
+
         $exceptions->render(function (Throwable $e, Request $request) {
             // Let the framework render these: 422 with per-field errors, and 401.
             // Without this they fell through to the generic branch below as a 500.

@@ -1,7 +1,10 @@
 <?php
 
 return [
-    'default' => env('QUEUE_CONNECTION', 'redis'),
+    // The Render deployment runs one container with no queue worker, so jobs
+    // (including OTP email) execute inline. Set QUEUE_CONNECTION=redis once a
+    // worker is added.
+    'default' => env('QUEUE_CONNECTION', 'sync'),
 
     'connections' => [
         'sync' => ['driver' => 'sync'],

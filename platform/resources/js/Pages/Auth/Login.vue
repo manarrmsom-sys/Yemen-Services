@@ -78,6 +78,9 @@ const submit = async () => {
         <div class="mx-auto max-w-sm px-4 py-12">
             <h1 class="text-2xl font-extrabold text-ink">{{ t('auth.login_heading') }}</h1>
             <p class="mt-2 text-sm text-ink-500">{{ t('auth.login_sub') }}</p>
+            <p v-if="page.props.flash?.error" class="mt-4 rounded-xl border border-crimson-200 bg-crimson-50 p-3 text-sm font-semibold text-crimson-700" role="alert">
+                {{ page.props.flash.error }}
+            </p>
 
             <form v-if="phase === 'identity'" class="mt-6 space-y-4" @submit.prevent="sendCode">
                 <div v-if="channels.length > 1" class="grid gap-1.5 rounded-xl bg-ink-100 p-1" :style="{ gridTemplateColumns: `repeat(${channels.length}, minmax(0, 1fr))` }" role="tablist">

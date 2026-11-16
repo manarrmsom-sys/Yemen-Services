@@ -14,4 +14,5 @@ return [
     'otp_attempts' => 'Too many incorrect attempts. Request a new code.',
     'otp_cooldown' => 'Please wait :seconds seconds before requesting another code.',
     'otp_throttled' => 'Too many requests. Try again in :seconds seconds.',
+    'otp_delivery_failed' => 'We could not send the verification code right now. Try again shortly or contact support.',
 ];

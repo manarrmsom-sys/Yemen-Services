@@ -11,6 +11,7 @@ use App\Services\Messaging\EmailChannel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use InvalidArgumentException;
 use Tests\TestCase;
@@ -116,6 +117,37 @@ class EmailOtpLoginTest extends TestCase
         // Raw (non-mailable) sends are not recorded by the fake; reaching here
         // without an exception proves the job builds a valid message.
         $this->assertTrue(true);
+    }
+
+    public function test_the_mail_job_sends_over_https_when_resend_is_configured(): void
+    {
+        // Render blocks SMTP egress on its free plan, so production needs this path.
+        config([
+            'services.resend.key' => 're_test_key',
+            'mail.from.address' => 'no-reply@example.test',
+            'mail.from.name' => 'Yemen Services',
+        ]);
+        Http::fake(['api.resend.com/*' => Http::response(['id' => 'email_1'])]);
+
+        (new SendEmailMessage(self::EMAIL, 'Your code is 12345', 'Subject'))->handle();
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.resend.com/emails'
+            && $request->hasHeader('Authorization', 'Bearer re_test_key')
+            && $request['to'] === [self::EMAIL]
+            && $request['subject'] === 'Subject'
+            && str_contains($request['html'], '12345'));
+    }
+
+    public function test_a_delivery_failure_is_a_field_error_not_a_server_error(): void
+    {
+        config(['services.resend.key' => 're_test_key', 'mail.from.address' => 'no-reply@example.test']);
+        Http::fake(['api.resend.com/*' => Http::response(['message' => 'domain not verified'], 403)]);
+
+        $this->postJson('/api/v1/auth/otp/request', ['email' => self::EMAIL])
+            ->assertStatus(422)->assertJsonValidationErrors(['email']);
+
+        // The undeliverable code is consumed, so a retry is not blocked by the cooldown.
+        $this->assertNotNull(OtpCode::sole()->consumed_at);
     }
 
     public function test_request_requires_a_valid_email_or_a_phone(): void

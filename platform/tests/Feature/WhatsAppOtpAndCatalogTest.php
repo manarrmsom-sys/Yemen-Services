@@ -117,8 +117,12 @@ class WhatsAppOtpAndCatalogTest extends TestCase
         $this->enableWhatsApp();
         Http::fake(['graph.facebook.com/*' => Http::response(['error' => ['message' => 'bad token']], 401)]);
 
+        // An honest field error instead of a 500, and the undelivered code is
+        // consumed so a retry is not stuck behind the resend cooldown.
         $this->postJson('/api/v1/auth/otp/request', ['phone' => self::PHONE, 'channel' => 'whatsapp'])
-            ->assertStatus(500);
+            ->assertStatus(422)->assertJsonValidationErrors(['phone']);
+
+        $this->assertNotNull(OtpCode::sole()->consumed_at);
     }
 
     public function test_web_login_over_whatsapp_creates_a_session(): void
