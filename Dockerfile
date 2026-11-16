@@ -1,9 +1,10 @@
 FROM php:8.2-cli
 
-# تثبيت أدوات النظام وإضافات PHP و Node.js
+# تثبيت أدوات النظام وإضافات PHP كاملة و Node.js
 RUN apt-get update && apt-get install -y \
-    git curl unzip zip libpng-dev libonig-dev libxml2-dev libsqlite3-dev \
-    && docker-php-ext-install pdo_sqlite mbstring xml bcmath gd \
+    git curl unzip zip libzip-dev libcurl4-openssl-dev libicu-dev \
+    libpng-dev libonig-dev libxml2-dev libsqlite3-dev \
+    && docker-php-ext-install pdo_sqlite mbstring xml bcmath gd zip curl intl \
     && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -17,8 +18,8 @@ WORKDIR /app
 COPY platform/ /app/
 
 # تثبيت اعتماديات PHP وبناء واجهة Vue + Vite PWA
-RUN composer install --no-dev --optimize-autoloader --no-interaction \
-    && npm ci \
+RUN composer update --no-dev --optimize-autoloader --no-interaction \
+    && npm install \
     && npm run build
 
 # تجهيز مجلدات التخزين وقاعدة بيانات SQLite
