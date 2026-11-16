@@ -67,6 +67,24 @@ class WaitlistVotingAndBrandTest extends TestCase
         $this->vote(['governorate_id' => $this->capital->id, 'district_id' => $this->soon->id], 3)->assertCreated();
     }
 
+    public function test_sanaa_and_amanat_al_asimah_are_not_vote_targets(): void
+    {
+        $this->capital->update(['code' => 'amanat_al_asimah']);
+        $sanaa = Governorate::create(['code' => 'sanaa', 'name_ar' => 'صنعاء', 'name_en' => 'Sanaa', 'is_active' => true]);
+        District::create(['governorate_id' => $sanaa->id, 'name_ar' => 'سنحان', 'status' => 'active']);
+
+        // Neither appears in the public vote tree, even though one is live.
+        $codes = collect($this->getJson('/api/v1/zones')->assertOk()->json('data'))->pluck('code');
+        $this->assertNotContains('amanat_al_asimah', $codes);
+        $this->assertNotContains('sanaa', $codes);
+        $this->assertContains('aden', $codes);
+
+        // And a vote aimed at them is refused: book directly instead.
+        $this->vote(['governorate_id' => $sanaa->id], 1)->assertStatus(422)->assertJsonValidationErrors(['governorate_id']);
+        $this->vote(['governorate_id' => $this->capital->id], 2)->assertStatus(422)->assertJsonValidationErrors(['governorate_id']);
+        $this->assertSame(0, ZoneWaitlist::count());
+    }
+
     public function test_public_zone_tree_reports_vote_counts_and_updates_after_a_vote(): void
     {
         $this->vote(['governorate_id' => $this->aden->id], 1);

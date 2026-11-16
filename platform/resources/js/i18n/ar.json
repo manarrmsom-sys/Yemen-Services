@@ -72,7 +72,9 @@
         "hours": "عدد الساعات",
         "governorate": "المحافظة",
         "district": "الحي",
-        "directions": "أقرب معلم / وصف الموقع",
+        "directions": "اسم الحارة / أقرب معلم ووصف الموقع",
+        "directions_hint": "مثال: حي شملان، جوار مسجد النور، بيت رقم 12",
+        "step_details": "الخدمة والموقع",
         "urgency": "موعد الخدمة",
         "urgency_flexible": "مرن",
         "urgency_today": "اليوم",
@@ -175,6 +177,7 @@
     "common": {
         "currency": "ريال",
         "loading": "جارٍ التحميل...",
+        "optional": "اختياري",
         "error": "حدث خطأ",
         "retry": "إعادة المحاولة",
         "save": "حفظ",

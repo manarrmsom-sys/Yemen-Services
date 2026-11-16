@@ -250,19 +250,19 @@ class ZonesAndOnboardingTest extends TestCase
         $this->getJson('/api/v1/admin/zones/waitlist')->assertForbidden();
     }
 
-    public function test_seeder_creates_a_narrow_launch_and_keeps_admin_changes(): void
+    public function test_seeder_creates_the_new_launch_zones(): void
     {
         $this->seed([GovernorateSeeder::class, DistrictSeeder::class]);
         $capital = Governorate::where('code', 'amanat_al_asimah')->first();
+        $sanaa = Governorate::where('code', 'sanaa')->first();
 
-        $this->assertGreaterThan(0, $capital->districts()->where('status', 'active')->count());
-        $this->assertGreaterThan(0, $capital->districts()->where('status', 'coming_soon')->count());
-        $this->assertSame(0, District::whereHas('governorate', fn ($q) => $q->where('code', 'aden'))->where('status', 'active')->count());
-
-        $district = $capital->districts()->where('status', 'coming_soon')->first();
-        $district->update(['status' => 'active']);
-        $this->seed(DistrictSeeder::class);
-        $this->assertSame('active', $district->fresh()->status, 'Re-seeding must not undo an admin launch.');
+        // Every capital and Sanaa district is live: no district is held back.
+        $this->assertTrue((bool) $capital->is_active);
+        $this->assertTrue((bool) $sanaa->is_active);
+        $this->assertSame(10, $capital->districts()->where('status', 'active')->count());
+        $this->assertSame(15, $sanaa->districts()->where('status', 'active')->count());
+        $this->assertSame(0, $capital->districts()->where('status', 'coming_soon')->count());
+        $this->assertSame(0, District::whereHas('governorate', fn ($q) => $q->where('code', 'aden'))->count());
     }
 
     // ---- technician onboarding ---------------------------------------------

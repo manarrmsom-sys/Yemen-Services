@@ -40,6 +40,11 @@ class ZoneController extends Controller
             'service_category_id' => ['nullable', 'integer', Rule::exists('service_categories', 'id')],
         ]);
 
+        // Sanaa and Amanat Al-Asimah are served: no vote, book directly.
+        if (! $this->zones->isVotableGovernorate((int) $data['governorate_id'])) {
+            throw ValidationException::withMessages(['governorate_id' => [__('errors.zone_already_served')]]);
+        }
+
         // What can be voted for:
         //   - a coming-soon city: as a whole, one of its districts, or a named district;
         //   - a live city: only a district that is not live yet (listed or named).

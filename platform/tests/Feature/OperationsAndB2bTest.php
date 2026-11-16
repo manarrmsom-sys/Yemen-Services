@@ -97,35 +97,37 @@ class OperationsAndB2bTest extends TestCase
     // 1. Hyper-local launch
     // =====================================================================
 
-    public function test_seeding_leaves_only_the_capital_live_with_its_four_districts(): void
+    public function test_seeding_leaves_the_capital_and_sanaa_live(): void
     {
         Governorate::query()->delete();
         $this->seed([GovernorateSeeder::class, DistrictSeeder::class]);
 
         $live = Governorate::where('is_active', true)->pluck('code')->all();
-        $this->assertSame(['amanat_al_asimah'], $live, 'Only a governorate with an active district is live.');
+        $this->assertEqualsCanonicalizing(['amanat_al_asimah', 'sanaa'], $live);
 
-        $this->assertEqualsCanonicalizing(
-            ['السبعين', 'معين', 'الوحدة', 'التحرير'],
-            District::where('status', 'active')->pluck('name_ar')->all(),
-        );
-        $this->assertFalse(Governorate::where('code', 'aden')->value('is_active') == true, 'Aden has districts, none active.');
-        $this->assertFalse(Governorate::where('code', 'taiz')->value('is_active') == true, 'No districts at all: not live.');
+        // Ten capital districts and fifteen Sanaa districts, all bookable.
+        $this->assertSame(10, Governorate::where('code', 'amanat_al_asimah')->first()->districts()->where('status', 'active')->count());
+        $this->assertSame(15, Governorate::where('code', 'sanaa')->first()->districts()->where('status', 'active')->count());
+
+        $activeDistricts = District::where('status', 'active')->pluck('name_ar')->all();
+        foreach (['السبعين', 'شملان/همدان', 'سنحان وبني بهلول', 'صعفان'] as $district) {
+            $this->assertContains($district, $activeDistricts);
+        }
+
+        // The remaining twenty governorates are listed as coming soon.
+        $this->assertSame(22, Governorate::count());
+        $this->assertSame(20, Governorate::where('is_active', false)->count());
+        $this->assertFalse(Governorate::where('code', 'aden')->value('is_active') == true);
     }
 
-    public function test_reseeding_keeps_governorates_an_admin_switched_on_or_off(): void
+    public function test_reseeding_respects_the_new_active_zones(): void
     {
         $this->seed([GovernorateSeeder::class, DistrictSeeder::class]);
-        Governorate::where('code', 'aden')->update(['is_active' => true]);
-        Governorate::where('code', 'amanat_al_asimah')->update(['is_active' => false]);
-
-        $this->seed([GovernorateSeeder::class, DistrictSeeder::class]);
-
-        $this->assertTrue((bool) Governorate::where('code', 'aden')->value('is_active'));
-        $this->assertFalse((bool) Governorate::where('code', 'amanat_al_asimah')->value('is_active'));
+        $this->assertTrue((bool) Governorate::where('code', 'amanat_al_asimah')->value('is_active'));
+        $this->assertTrue((bool) Governorate::where('code', 'sanaa')->value('is_active'));
     }
 
-    public function test_a_freshly_seeded_platform_only_accepts_bookings_in_the_live_districts(): void
+    public function test_a_freshly_seeded_platform_only_accepts_bookings_in_the_live_zones(): void
     {
         Governorate::query()->delete();
         $this->seed([GovernorateSeeder::class, DistrictSeeder::class]);
@@ -134,12 +136,21 @@ class OperationsAndB2bTest extends TestCase
         $base = ['service_id' => $this->service->id, 'urgency' => 'today', 'contact_name' => 'منار', 'contact_phone' => '+967771234567', 'payment_method' => 'cod'];
 
         $this->postJson('/api/v1/bookings', $base + ['governorate_id' => $capital->id, 'district_id' => $capital->districts()->where('name_ar', 'معين')->value('id')])->assertCreated();
-        $this->postJson('/api/v1/bookings', $base + ['governorate_id' => $capital->id, 'district_id' => $capital->districts()->where('name_ar', 'شعوب')->value('id')])->assertStatus(422);
+
+        // Sanaa is served in full too: a district booking goes straight through.
+        $sanaa = Governorate::where('code', 'sanaa')->first();
+        $this->postJson('/api/v1/bookings', $base + [
+            'governorate_id' => $sanaa->id,
+            'district_id' => $sanaa->districts()->where('name_ar', 'سنحان وبني بهلول')->value('id'),
+            'directions' => 'بيت رقم 12، جوار مسجد النور',
+        ])->assertCreated();
+
+        // Taiz is not live yet
         $this->postJson('/api/v1/bookings', $base + ['governorate_id' => $taiz->id, 'district' => 'القاهرة'])
             ->assertStatus(422)->assertJsonValidationErrors(['governorate_id']);
 
-        // The booking form only offers the live governorate.
-        $this->get('/')->assertInertia(fn ($page) => $page->has('governorates', 1)->where('governorates.0.code', 'amanat_al_asimah'));
+        // The booking form offers the live governorates.
+        $this->get('/')->assertInertia(fn ($page) => $page->has('governorates', 2));
     }
 
     // =====================================================================

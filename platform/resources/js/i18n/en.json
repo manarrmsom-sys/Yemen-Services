@@ -72,7 +72,9 @@
         "hours": "Hours",
         "governorate": "Governorate",
         "district": "District",
-        "directions": "Nearest landmark / directions",
+        "directions": "Neighbourhood (hara) / nearest landmark",
+        "directions_hint": "e.g. Shamlan, next to Al Noor mosque, house 12",
+        "step_details": "Service & location",
         "urgency": "When",
         "urgency_flexible": "Flexible",
         "urgency_today": "Today",
@@ -175,6 +177,7 @@
     "common": {
         "currency": "YER",
         "loading": "Loading...",
+        "optional": "optional",
         "error": "Something went wrong",
         "retry": "Retry",
         "save": "Save",

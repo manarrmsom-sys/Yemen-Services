@@ -17,6 +17,12 @@ use Illuminate\Support\Facades\Cache;
  */
 class ZoneService
 {
+    /**
+     * Sanaa and Amanat Al-Asimah are served in full, so they must never appear
+     * as vote targets: the waitlist is only for the other twenty governorates.
+     */
+    public const WAITLIST_EXCLUDED_CODES = ['amanat_al_asimah', 'sanaa'];
+
     /** Active governorates with their districts, for the booking and join flows. */
     public function served(string $locale): array
     {
@@ -26,13 +32,28 @@ class ZoneService
         ));
     }
 
-    /** Every governorate, including coming-soon ones, for the waitlist form. */
+    /**
+     * Every vote target: the twenty governorates still waiting for launch.
+     * Sanaa and Amanat Al-Asimah are excluded — they are served directly.
+     */
     public function all(string $locale): array
     {
         return Cache::remember("zones:all:{$locale}", 900, fn () => $this->map(
-            Governorate::with('districts')->orderByDesc('is_active')->orderBy('name_'.$locale)->get(),
+            Governorate::with('districts')
+                ->whereNotIn('code', self::WAITLIST_EXCLUDED_CODES)
+                ->orderByDesc('is_active')
+                ->orderBy('name_'.$locale)
+                ->get(),
             $locale,
         ));
+    }
+
+    /** Whether a governorate may be voted for on the expansion waitlist. */
+    public function isVotableGovernorate(int $governorateId): bool
+    {
+        $code = Governorate::whereKey($governorateId)->value('code');
+
+        return $code !== null && ! in_array($code, self::WAITLIST_EXCLUDED_CODES, true);
     }
 
     /**
@@ -46,12 +67,14 @@ class ZoneService
             $byGovernorate = \App\Models\ZoneWaitlist::selectRaw('governorate_id, COUNT(*) as n')->groupBy('governorate_id')->pluck('n', 'governorate_id');
             $byDistrict = \App\Models\ZoneWaitlist::whereNotNull('district_id')->selectRaw('district_id, COUNT(*) as n')->groupBy('district_id')->pluck('n', 'district_id');
 
+            $all = $this->all($locale);
+
             return array_map(function (array $g) use ($byGovernorate, $byDistrict) {
                 $g['votes'] = (int) ($byGovernorate[$g['id']] ?? 0);
                 $g['districts'] = array_map(fn (array $d) => $d + ['votes' => (int) ($byDistrict[$d['id']] ?? 0)], $g['districts']);
 
                 return $g;
-            }, $this->all($locale));
+            }, $all);
         });
     }
 

@@ -6,12 +6,13 @@ import { useApi } from '@/composables/useApi';
 /**
  * Expansion waitlist / city vote.
  *
- * Any governorate or district that is not live yet can be requested: a whole
- * coming-soon city, a coming-soon district, or a district typed by name.
- * Used inside the booking drawer and, with `standalone`, on the public
- * /waitlist campaign page. Posts to the throttled POST /api/v1/waitlist.
+ * The vote is deliberately minimal: a governorate (one of the twenty still
+ * waiting), an optional district, and a phone number. Sanaa and Amanat
+ * Al-Asimah never reach this component — they are served directly.
+ * Posts to the throttled POST /api/v1/waitlist.
  */
 const props = defineProps({
+    /** Preselect a governorate by id, e.g. from a booking flow. */
     governorateId: { type: Number, default: null },
     /** Preselect a governorate by code, e.g. from /waitlist?city=aden. */
     cityCode: { type: String, default: null },
@@ -33,26 +34,20 @@ const done = ref(null); // { already: bool }
 const errors = ref({});
 const copied = ref(false);
 
-const form = reactive({ governorate_id: null, district_id: '', district_name: '', phone: props.phone });
+const form = reactive({ governorate_id: null, district_id: '', phone: props.phone });
 
 const governorate = computed(() => tree.value.find((g) => g.id === form.governorate_id));
-const cityLive = computed(() => governorate.value?.status === 'active');
-// Only zones that are not live yet can be voted for.
+// A coming-soon city may have some districts listed; the district is optional.
 const pending = computed(() => (governorate.value?.districts || []).filter((d) => d.status !== 'active'));
-const typing = computed(() => form.district_id === 'other' || !pending.value.length);
 
 function preselect() {
     const byCode = props.cityCode && tree.value.find((g) => g.code === props.cityCode);
     const byId = tree.value.find((g) => g.id === props.governorateId);
-    // On the campaign page default to the first city that is not live yet.
     const fallback = props.standalone ? tree.value.find((g) => g.status !== 'active') : null;
     form.governorate_id = (byCode || byId || fallback || tree.value[0])?.id ?? null;
 }
 
-watch(() => form.governorate_id, () => {
-    form.district_id = '';
-    form.district_name = '';
-});
+watch(() => form.governorate_id, () => { form.district_id = ''; });
 
 onMounted(async () => {
     if (!props.zones) {
@@ -69,11 +64,9 @@ async function submit() {
     submitting.value = true;
     errors.value = {};
     try {
-        const whole = form.district_id === 'whole';
         const { data } = await api.post('/waitlist', {
             governorate_id: form.governorate_id,
-            district_id: typing.value || whole ? null : form.district_id,
-            district_name: typing.value && !whole ? form.district_name.trim() || null : null,
+            district_id: form.district_id || null,
             service_category_id: props.categoryId,
             phone: form.phone.trim(),
         });
@@ -121,25 +114,16 @@ async function share() {
                 <label class="block">
                     <span class="block text-sm font-semibold">{{ t('booking.waitlist_city') }}</span>
                     <select v-model.number="form.governorate_id" class="field">
-                        <option v-for="g in tree" :key="g.id" :value="g.id">{{ g.name }} — {{ g.status === 'active' ? t('booking.vote_live') : t('booking.coming_soon') }}</option>
+                        <option v-for="g in tree" :key="g.id" :value="g.id">{{ g.name }}</option>
                     </select>
                 </label>
 
                 <label v-if="pending.length" class="block">
-                    <span class="block text-sm font-semibold">{{ t('booking.waitlist_district') }}</span>
-                    <select v-model="form.district_id" class="field" required>
-                        <option value="" disabled>—</option>
-                        <option v-if="!cityLive" value="whole">{{ t('booking.vote_whole_city') }}</option>
+                    <span class="block text-sm font-semibold">{{ t('booking.waitlist_district') }} ({{ t('common.optional') }})</span>
+                    <select v-model="form.district_id" class="field">
+                        <option value="">{{ t('booking.vote_whole_city') }}</option>
                         <option v-for="d in pending" :key="d.id" :value="d.id">{{ d.name }}</option>
-                        <option value="other">{{ t('booking.waitlist_other') }}</option>
                     </select>
-                </label>
-
-                <!-- In a live city the district is what is being asked for, so it is required;
-                     in a coming-soon city it is optional detail. -->
-                <label v-if="typing" class="block">
-                    <span class="block text-sm font-semibold">{{ t('booking.waitlist_district_name') }}<template v-if="!cityLive"> ({{ t('booking.vote_whole_city') }})</template></span>
-                    <input v-model="form.district_name" class="field" maxlength="80" :required="cityLive" />
                 </label>
 
                 <label class="block">

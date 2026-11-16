@@ -7,6 +7,9 @@ use Illuminate\Database\Seeder;
 
 class GovernorateSeeder extends Seeder
 {
+    /** The two zones served from day one: full booking, no voting. */
+    public const LAUNCH_CODES = ['amanat_al_asimah', 'sanaa'];
+
     public function run(): void
     {
         // code, ar, en, lat, lng, dispatch multiplier (remote/underserved cost more)
@@ -36,9 +39,8 @@ class GovernorateSeeder extends Seeder
         ];
 
         foreach ($rows as [$code, $ar, $en, $lat, $lng, $mult]) {
-            // Created inactive: a governorate goes live only when it has an active
-            // district (DistrictSeeder) or an admin switches it on. `is_active` is
-            // never touched on re-seed, so launches made in the admin survive.
+            // Amanat Al-Asimah and Sanaa are live and bookable in full. The other
+            // twenty are coming soon: they are the only vote targets on /waitlist.
             $governorate = Governorate::firstOrCreate(['code' => $code], [
                 'name_ar' => $ar, 'name_en' => $en, 'is_active' => false,
             ]);
@@ -46,6 +48,7 @@ class GovernorateSeeder extends Seeder
                 'name_ar' => $ar, 'name_en' => $en,
                 'center_lat' => $lat, 'center_lng' => $lng,
                 'dispatch_multiplier' => $mult,
+                'is_active' => in_array($code, self::LAUNCH_CODES, true),
             ]);
         }
     }
