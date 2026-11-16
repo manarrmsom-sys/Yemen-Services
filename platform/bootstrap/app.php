@@ -22,8 +22,12 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Cloudflare + Nginx sit in front; honour X-Forwarded-* from them only.
-        $middleware->trustProxies(at: explode(',', (string) env('TRUSTED_PROXIES', '127.0.0.1,::1')));
+        // Render terminates TLS at its edge proxy and forwards X-Forwarded-*.
+        // Trusting the proxy chain is what makes Laravel see the request as
+        // https: the session cookie, the XSRF-TOKEN pair and the real client
+        // IP (used by the rate limiters) all depend on it. The app is only
+        // reachable through that proxy, so every hop is trusted.
+        $middleware->trustProxies(at: '*');
 
         $middleware->web(append: [
             SetLocale::class,

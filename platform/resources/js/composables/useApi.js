@@ -11,7 +11,10 @@ const client = axios.create({
     withCredentials: true,
 });
 
-const csrfCookie = axios.get('/sanctum/csrf-cookie', { withCredentials: true });
+// The CSRF cookie is refreshed before every state-changing request: Laravel
+// regenerates the token when the session changes (e.g. right after login), and
+// a stale XSRF-TOKEN is exactly what produces spurious 419 responses.
+const csrfCookie = () => axios.get('/sanctum/csrf-cookie', { withCredentials: true });
 
 function recoverFromExpiredSession() {
     window.alert('انتهت جلسة الصفحة. سيتم تحديثها الآن.');
@@ -36,10 +39,10 @@ export function useApi() {
 
     return {
         get: (url, config) => client.get(url, config).then((r) => r.data),
-        post: (url, data, config) => csrfCookie.then(() => client.post(url, data, config)).then((r) => r.data),
-        put: (url, data, config) => csrfCookie.then(() => client.put(url, data, config)).then((r) => r.data),
-        patch: (url, data, config) => csrfCookie.then(() => client.patch(url, data, config)).then((r) => r.data),
-        delete: (url, config) => csrfCookie.then(() => client.delete(url, config)).then((r) => r.data),
+        post: (url, data, config) => csrfCookie().then(() => client.post(url, data, config)).then((r) => r.data),
+        put: (url, data, config) => csrfCookie().then(() => client.put(url, data, config)).then((r) => r.data),
+        patch: (url, data, config) => csrfCookie().then(() => client.patch(url, data, config)).then((r) => r.data),
+        delete: (url, config) => csrfCookie().then(() => client.delete(url, config)).then((r) => r.data),
         raw: client,
     };
 }
